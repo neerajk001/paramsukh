@@ -23,8 +23,8 @@ AdminJS.registerAdapter({
 
 // Admin authentication
 const DEFAULT_ADMIN = {
-  email: 'admin@paramsukh.com',
-  password: 'admin123' // Change this in production!
+  email: process.env.ADMIN_EMAIL || 'admin@paramsukh.com',
+  password: process.env.ADMIN_PASSWORD || 'admin123'
 };
 
 const authenticate = async (email, password) => {
@@ -173,13 +173,13 @@ export const setupAdmin = () => {
     {
       authenticate,
       cookieName: 'adminjs',
-      cookiePassword: 'sessionsecret', // Change this in production!
+      cookiePassword: process.env.ADMIN_COOKIE_PASSWORD || 'sessionsecret',
     },
     null,
     {
       resave: true,
       saveUninitialized: true,
-      secret: 'sessionsecret', // Change this in production!
+      secret: process.env.ADMIN_SESSION_SECRET || 'sessionsecret',
     }
   );
 

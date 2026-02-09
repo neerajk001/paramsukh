@@ -2,12 +2,11 @@
 /dist
 /.env
 /.vscode
-/serviceAcccountKey.json
-.DS_Store
+
 /.env.local
 /logs
 /coverage
 *.md
 !README.md
 nul
-serviceAcccountKey.json
+serviceAccountKey.json
