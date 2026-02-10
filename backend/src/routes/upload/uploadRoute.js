@@ -1,5 +1,6 @@
 import express from 'express';
 import { protectedRoutes } from '../../middleware/protectedRoutes.js';
+import { adminAuth } from '../../middleware/adminAuth.js';
 import { uploadLimiter } from '../../middleware/rateLimiter.js';
 import {
   uploadSingleImage as uploadSingleImageMiddleware,
@@ -80,7 +81,7 @@ router.post('/product-images',
 // @multipart file: image
 // @query type: thumbnail or banner
 router.post('/course-media',
-  protectedRoutes,
+  adminAuth,
   uploadSingleImageMiddleware,
   handleMulterError,
   uploadCourseMedia

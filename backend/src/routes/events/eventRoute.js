@@ -22,6 +22,7 @@ import {
   updatePaymentStatus
 } from '../../controller/events/eventRegistration.controller.js';
 import { protectedRoutes } from '../../middleware/protectedRoutes.js';
+import { adminAuth } from '../../middleware/adminAuth.js';
 
 const router = express.Router();
 
@@ -31,7 +32,7 @@ const router = express.Router();
 
 // Create new event
 // POST /api/events/create
-router.post('/create', createEvent);
+router.post('/create', adminAuth, createEvent);
 
 // Get all events with filters
 // GET /api/events/all
@@ -56,11 +57,11 @@ router.get('/:id', getEventById);
 
 // Update event
 // PUT /api/events/:id
-router.put('/:id', updateEvent);
+router.put('/:id', adminAuth, updateEvent);
 
 // Delete event
 // DELETE /api/events/:id
-router.delete('/:id', deleteEvent);
+router.delete('/:id', adminAuth, deleteEvent);
 
 // ========================================
 // Event Actions
@@ -68,15 +69,15 @@ router.delete('/:id', deleteEvent);
 
 // Cancel event (soft delete - sets status to 'cancelled')
 // PATCH /api/events/:id/cancel
-router.patch('/:id/cancel', cancelEvent);
+router.patch('/:id/cancel', adminAuth, cancelEvent);
 
 // Add images to event (for past events gallery)
 // POST /api/events/:id/images
-router.post('/:id/images', addEventImages);
+router.post('/:id/images', adminAuth, addEventImages);
 
 // Add YouTube video to event (for recordings)
 // POST /api/events/:id/videos
-router.post('/:id/videos', addEventVideo);
+router.post('/:id/videos', adminAuth, addEventVideo);
 
 // ========================================
 // Event Registration Routes (Protected)
@@ -104,11 +105,11 @@ router.get('/:eventId/registrations', getEventRegistrations);
 
 // Check-in user at event
 // PATCH /api/events/:eventId/registrations/:registrationId/checkin
-router.patch('/:eventId/registrations/:registrationId/checkin', checkInUser);
+router.patch('/:eventId/registrations/:registrationId/checkin', adminAuth, checkInUser);
 
 // Update payment status
 // PATCH /api/events/:eventId/registrations/:registrationId/payment
-router.patch('/:eventId/registrations/:registrationId/payment', updatePaymentStatus);
+router.patch('/:eventId/registrations/:registrationId/payment', adminAuth, updatePaymentStatus);
 
 export default router;
 

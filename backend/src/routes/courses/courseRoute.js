@@ -16,37 +16,38 @@ import {
   getEnrollmentProgress
 } from '../../controller/courses/progress.controller.js';
 import { protectedRoutes } from '../../middleware/protectedRoutes.js';
+import { adminAuth } from '../../middleware/adminAuth.js';
 
 const router = express.Router();
 
-router.post('/create', createCourse);
-router.delete('/delete/:id', deleteCourse);
-router.put('/update/:id', updateCourse);
+router.post('/create', adminAuth, createCourse);
+router.delete('/delete/:id', adminAuth, deleteCourse);
+router.put('/update/:id', adminAuth, updateCourse);
 router.get('/all', getAllCourses);
 router.get('/:id', getCourseById);
 router.get('/:slug', getCourseBySlug);
 
 
-router.post('/:courseId/videos', addVideoToCourse);
+router.post('/:courseId/videos', adminAuth, addVideoToCourse);
 router.get('/:courseId/videos', getCourseVideos);
 router.get('/:courseId/videos/:videoId', getVideoById); // Specific video route must come before update/delete
-router.put('/:courseId/videos/:videoId', updateVideo);
-router.delete('/:courseId/videos/:videoId', deleteVideo);
+router.put('/:courseId/videos/:videoId', adminAuth, updateVideo);
+router.delete('/:courseId/videos/:videoId', adminAuth, deleteVideo);
 
 //pdf routes
-router.post('/:courseId/pdfs', addPdfToCourse);
+router.post('/:courseId/pdfs', adminAuth, addPdfToCourse);
 router.get('/:courseId/pdfs', getCoursePdfs);
 router.get('/:courseId/pdfs/:pdfId', getPdfById); // Specific pdf route must come before update/delete
-router.put('/:courseId/pdfs/:pdfId', updatePdf);
-router.delete('/:courseId/pdfs/:pdfId', deletePdf);
+router.put('/:courseId/pdfs/:pdfId', adminAuth, updatePdf);
+router.delete('/:courseId/pdfs/:pdfId', adminAuth, deletePdf);
 
 // livesession routes
-router.post('/:courseId/livesessions', addLiveSessionToCourse);
+router.post('/:courseId/livesessions', adminAuth, addLiveSessionToCourse);
 router.get('/:courseId/livesessions', getCourseLiveSessions);
 router.get('/:courseId/livesessions/:liveSessionId', getLiveSessionById);
-router.put('/:courseId/livesessions/:liveSessionId', updateLiveSession);
-router.delete('/:courseId/livesessions/:liveSessionId', deleteLiveSession);
-router.patch('/:courseId/livesessions/:liveSessionId/recording', addSessionRecording);
+router.put('/:courseId/livesessions/:liveSessionId', adminAuth, updateLiveSession);
+router.delete('/:courseId/livesessions/:liveSessionId', adminAuth, deleteLiveSession);
+router.patch('/:courseId/livesessions/:liveSessionId/recording', adminAuth, addSessionRecording);
 
 // Progress tracking routes (require authentication)
 router.get('/:courseId/progress', protectedRoutes, getEnrollmentProgress);
