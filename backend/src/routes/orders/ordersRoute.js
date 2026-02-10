@@ -11,11 +11,17 @@ import {
   trackOrder,
   getInvoice
 } from '../../controller/orders/orders.controller.js';
+import {
+  updateOrderStatusAdmin,
+  getOrderDetailsAdmin
+} from '../../controller/orders/admin.orders.controller.js';
 
 const router = express.Router();
 
 // Admin routes
 router.get('/all', adminAuth, getAllOrders);
+router.get('/:id/admin', adminAuth, getOrderDetailsAdmin);
+router.patch('/:id/status', adminAuth, updateOrderStatusAdmin);
 
 // All other routes are protected
 router.use(protectedRoutes);

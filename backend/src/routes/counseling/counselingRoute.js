@@ -11,12 +11,20 @@ import {
   updatePaymentStatus,
   submitFeedback
 } from '../../controller/counseling/counseling.controller.js';
-import { getAllBookings } from '../../controller/counseling/admin.counseling.controller.js';
+import {
+  getAllBookings,
+  getBookingDetailsAdmin,
+  updateBookingStatusAdmin,
+  deleteBookingAdmin
+} from '../../controller/counseling/admin.counseling.controller.js';
 
 const router = express.Router();
 
 // Admin routes
 router.get('/all', adminAuth, getAllBookings);
+router.get('/admin/:id', adminAuth, getBookingDetailsAdmin);
+router.patch('/admin/:id/status', adminAuth, updateBookingStatusAdmin);
+router.delete('/admin/:id', adminAuth, deleteBookingAdmin);
 
 // All other routes are protected (require authentication)
 router.use(protectedRoutes);
