@@ -14,12 +14,14 @@ import {
   toggleCommentLike,
   deletePost
 } from '../../controller/community/community.controller.js';
-import { getAllPosts } from '../../controller/community/admin.community.controller.js';
+import { getAllPosts, deletePostAdmin, togglePinPost } from '../../controller/community/admin.community.controller.js';
 
 const router = express.Router();
 
 // Admin routes
 router.get('/all', adminAuth, getAllPosts);
+router.delete('/posts/:postId/admin', adminAuth, deletePostAdmin);
+router.patch('/posts/:postId/pin', adminAuth, togglePinPost);
 
 // All other community routes require authentication
 router.use(protectedRoutes);

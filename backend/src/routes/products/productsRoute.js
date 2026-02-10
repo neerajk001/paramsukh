@@ -1,5 +1,6 @@
-  import express from 'express';
+import express from 'express';
 import { protectedRoutes } from '../../middleware/protectedRoutes.js';
+import { adminAuth } from '../../middleware/adminAuth.js';
 import {
   createProduct,
   getAllProducts,
@@ -12,6 +13,11 @@ import {
   addProductReview,
   getProductReviews
 } from '../../controller/products/products.controller.js';
+import {
+  createProductAdmin,
+  updateProductAdmin,
+  deleteProductAdmin
+} from '../../controller/products/admin.products.controller.js';
 
 const router = express.Router();
 
@@ -23,7 +29,12 @@ router.get('/category/:categoryId', getProductsByCategory);
 router.get('/:id', getProductById);
 router.get('/:id/reviews', getProductReviews);
 
-// Protected routes
+// Admin routes (New Simplified APIs)
+router.post('/admin/create', adminAuth, createProductAdmin);
+router.put('/admin/:id', adminAuth, updateProductAdmin);
+router.delete('/admin/:id', adminAuth, deleteProductAdmin);
+
+// Protected routes (Original Shop Owner APIs)
 router.post('/create', protectedRoutes, createProduct);
 router.put('/:id', protectedRoutes, updateProduct);
 router.delete('/:id', protectedRoutes, deleteProduct);

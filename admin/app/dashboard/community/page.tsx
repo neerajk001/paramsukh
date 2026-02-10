@@ -3,15 +3,16 @@
 import { useEffect, useState } from 'react';
 import apiClient from '@/lib/api/client';
 import toast from 'react-hot-toast';
-import { Search, MessageSquare, Heart, MessageCircle } from 'lucide-react';
+import { Search, MessageSquare, Heart, MessageCircle, Trash2, Pin } from 'lucide-react';
 
 interface Post {
     _id: string;
-    author: { name: string };
+    userId: { displayName: string };
     content: string;
-    group: { name: string };
-    likes: number;
-    comments: number;
+    groupId: { name: string };
+    likeCount: number;
+    commentCount: number;
+    isPinned: boolean;
     createdAt: string;
 }
 
@@ -41,6 +42,37 @@ export default function CommunityPage() {
             setLoading(false);
         }
     };
+
+    const handleDeletePost = async (postId: string) => {
+        if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            await apiClient.delete(`/api/community/posts/${postId}/admin`);
+            toast.success('Post deleted successfully');
+            fetchPosts(); // Refresh the list
+        } catch (error: any) {
+            console.error('Error deleting post:', error);
+            toast.error(error.response?.data?.message || 'Failed to delete post');
+        }
+    };
+
+    const handleTogglePin = async (postId: string, currentPinStatus: boolean) => {
+        try {
+            const response = await apiClient.patch(`/api/community/posts/${postId}/pin`);
+            toast.success(response.data.message);
+            fetchPosts(); // Refresh the list
+        } catch (error: any) {
+            console.error('Error toggling pin:', error);
+            toast.error(error.response?.data?.message || 'Failed to update pin status');
+        }
+    };
+
+    const filteredPosts = posts.filter(post =>
+        post.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        post.userId?.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     if (loading) {
         return (
@@ -73,31 +105,55 @@ export default function CommunityPage() {
             </div>
 
             <div className="space-y-4">
-                {posts.length === 0 ? (
+                {filteredPosts.length === 0 ? (
                     <div className="bg-white rounded-xl p-12 text-center text-accent shadow-md">
                         <MessageSquare className="w-16 h-16 mx-auto mb-4 text-accent/30" />
                         <p>No community posts found</p>
                     </div>
                 ) : (
-                    posts.map((post) => (
-                        <div key={post._id} className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
+                    filteredPosts.map((post) => (
+                        <div key={post._id} className={`bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow ${post.isPinned ? 'border-l-4 border-primary' : ''}`}>
                             <div className="space-y-4">
                                 <div className="flex items-start justify-between">
-                                    <div>
-                                        <h3 className="font-bold text-secondary">{post.author?.name}</h3>
-                                        <p className="text-sm text-accent">{post.group?.name}</p>
+                                    <div className="flex-1">
+                                        <div className="flex items-center space-x-2">
+                                            <h3 className="font-bold text-secondary">{post.userId?.displayName || 'Unknown User'}</h3>
+                                            {post.isPinned && (
+                                                <span className="px-2 py-1 bg-primary/10 text-primary rounded text-xs font-medium flex items-center space-x-1">
+                                                    <Pin className="w-3 h-3" />
+                                                    <span>Pinned</span>
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-sm text-accent">{post.groupId?.name || 'Unknown Group'}</p>
                                     </div>
-                                    <span className="text-sm text-accent">{new Date(post.createdAt).toLocaleDateString()}</span>
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-sm text-accent">{new Date(post.createdAt).toLocaleDateString()}</span>
+                                        <button
+                                            onClick={() => handleTogglePin(post._id, post.isPinned)}
+                                            className={`p-2 rounded-lg transition ${post.isPinned ? 'text-primary bg-primary/10 hover:bg-primary/20' : 'text-gray-600 hover:bg-gray-100'}`}
+                                            title={post.isPinned ? 'Unpin post' : 'Pin post'}
+                                        >
+                                            <Pin className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeletePost(post._id)}
+                                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                                            title="Delete post"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
                                 <p className="text-secondary">{post.content}</p>
                                 <div className="flex items-center space-x-6 pt-4 border-t text-sm text-accent">
                                     <div className="flex items-center space-x-2">
                                         <Heart className="w-4 h-4" />
-                                        <span>{post.likes || 0} likes</span>
+                                        <span>{post.likeCount || 0} likes</span>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <MessageCircle className="w-4 h-4" />
-                                        <span>{post.comments || 0} comments</span>
+                                        <span>{post.commentCount || 0} comments</span>
                                     </div>
                                 </div>
                             </div>

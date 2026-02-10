@@ -10,12 +10,20 @@ import {
   deleteAllNotifications,
   createTestNotification
 } from '../../controller/notifications/notifications.controller.js';
-import { getAllNotifications } from '../../controller/notifications/admin.notifications.controller.js';
+import {
+  getAllNotifications,
+  sendBroadcastNotification,
+  deleteNotificationAdmin,
+  markNotificationReadAdmin
+} from '../../controller/notifications/admin.notifications.controller.js';
 
 const router = express.Router();
 
 // Admin routes
 router.get('/all', adminAuth, getAllNotifications);
+router.post('/broadcast', adminAuth, sendBroadcastNotification);
+router.delete('/:id/admin', adminAuth, deleteNotificationAdmin);
+router.patch('/:id/read/admin', adminAuth, markNotificationReadAdmin);
 
 // All other routes are protected (require authentication)
 router.use(protectedRoutes);
