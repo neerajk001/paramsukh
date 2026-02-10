@@ -69,17 +69,13 @@ export const submitAssessment = async (req, res) => {
       assessment.spiritualGrowth = spiritualGrowth;
       assessment.spiritualGrowthDetails = spiritualGrowthDetails || '';
 
-      // Generate new recommendations
-      assessment.generateRecommendations();
-
       await assessment.save();
 
       return res.status(200).json({
         success: true,
         message: 'Assessment updated successfully',
         data: {
-          assessment,
-          recommendations: assessment.recommendations
+          assessment
         }
       });
     }
@@ -104,9 +100,6 @@ export const submitAssessment = async (req, res) => {
       spiritualGrowthDetails: spiritualGrowthDetails || ''
     });
 
-    // Generate recommendations
-    assessment.generateRecommendations();
-
     await assessment.save();
 
     // Update user's assessment completion status
@@ -119,8 +112,7 @@ export const submitAssessment = async (req, res) => {
       success: true,
       message: 'Assessment submitted successfully',
       data: {
-        assessment,
-        recommendations: assessment.recommendations
+        assessment
       }
     });
   } catch (error) {
@@ -152,8 +144,7 @@ export const getAssessment = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
-        assessment,
-        recommendations: assessment.recommendations
+        assessment
       }
     });
   } catch (error) {
@@ -166,33 +157,16 @@ export const getAssessment = async (req, res) => {
   }
 };
 
-// @desc    Get personalized recommendations
+// @desc    Get personalized recommendations (Deprecated)
 // @route   GET /api/assessment/recommendations
 // @access  Private
 export const getRecommendations = async (req, res) => {
   try {
-    const userId = req.user._id;
-
-    const assessment = await Assessment.findOne({ user: userId });
-
-    if (!assessment) {
-      return res.status(404).json({
-        success: false,
-        message: 'Please complete your assessment first to get personalized recommendations'
-      });
-    }
-
-    // Regenerate recommendations if needed
-    if (!assessment.recommendations || assessment.recommendations.length === 0) {
-      assessment.generateRecommendations();
-      await assessment.save();
-    }
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: {
-        recommendations: assessment.recommendations,
-        assessmentDate: assessment.completedAt
+        recommendations: [],
+        message: "Recommendations system has been disabled."
       }
     });
   } catch (error) {
@@ -236,6 +210,38 @@ export const deleteAssessment = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete assessment',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get assessment by user ID (Admin)
+// @route   GET /api/assessment/admin/user/:userId
+// @access  Private (Admin)
+export const getAssessmentByUserIdAdmin = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const assessment = await Assessment.findOne({ user: userId });
+
+    if (!assessment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Assessment not found for this user'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        assessment
+      }
+    });
+  } catch (error) {
+    console.error('Get Admin Assessment Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve assessment',
       error: error.message
     });
   }

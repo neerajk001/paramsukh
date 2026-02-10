@@ -14,6 +14,9 @@ import {
 import {
   getAllUsers,
   getUserById,
+  createUserAdmin,
+  updateUserAdmin,
+  deleteUserAdmin,
   updateUserMembership,
   getUserEnrollments,
   getUserPayments,
@@ -35,6 +38,18 @@ router.get('/all', adminAuth, getAllUsers);
 // Get user by ID (Admin only)
 // GET /api/user/:id
 router.get('/:id', adminAuth, getUserById);
+
+// Create user (Admin only)
+// POST /api/user/create
+router.post('/create', adminAuth, createUserAdmin);
+
+// Update user details (Admin only)
+// PATCH /api/user/:id
+router.patch('/:id', adminAuth, updateUserAdmin);
+
+// Delete user (Admin only)
+// DELETE /api/user/:id
+router.delete('/:id', adminAuth, deleteUserAdmin);
 
 // Update user membership (Admin only)
 // PATCH /api/user/:id/membership

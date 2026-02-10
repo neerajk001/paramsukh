@@ -1,16 +1,21 @@
 import express from 'express';
 import { protectedRoutes } from '../../middleware/protectedRoutes.js';
+import { adminAuth } from '../../middleware/adminAuth.js';
 import {
   submitAssessment,
   getAssessment,
   getRecommendations,
   deleteAssessment,
-  checkAssessmentStatus
+  checkAssessmentStatus,
+  getAssessmentByUserIdAdmin
 } from '../../controller/assessment/assessment.controller.js';
 
 const router = express.Router();
 
-// All routes are protected (require authentication)
+// Get assessment by user ID (Admin)
+router.get('/admin/user/:userId', adminAuth, getAssessmentByUserIdAdmin);
+
+// All routes below are protected (require user authentication)
 router.use(protectedRoutes);
 
 // ========================================
@@ -31,5 +36,7 @@ router.get('/status', checkAssessmentStatus);
 
 // Delete assessment
 router.delete('/', deleteAssessment);
+
+
 
 export default router;

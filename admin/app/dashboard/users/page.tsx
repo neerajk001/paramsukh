@@ -3,21 +3,36 @@
 import { useEffect, useState } from 'react';
 import apiClient from '@/lib/api/client';
 import toast from 'react-hot-toast';
-import { Search, UserPlus, Edit, Trash2, Mail, Phone } from 'lucide-react';
+import { Search, UserPlus, Edit, Trash2, Mail, Phone, Crown, FileText, Loader2 } from 'lucide-react';
+import UserModal from './UserModal';
+import AssessmentModal from './AssessmentModal';
 
 interface User {
     _id: string;
-    name: string;
+    displayName: string;
+    name?: string; // fallback
     email: string;
     phone: string;
-    membershipType: string;
+    subscriptionPlan: string;
+    membershipType?: string; // fallback
     createdAt: string;
+    isActive?: boolean;
+    assessmentCompleted?: boolean;
 }
 
 export default function UsersPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+
+    // User Modal State
+    const [isModalOpen, setIsModalOpen] = useState(false); // For User Create/Edit
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+    // Assessment Modal State
+    const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
+    const [assessmentData, setAssessmentData] = useState<any>(null);
+    const [loadingAssessment, setLoadingAssessment] = useState(false);
 
     useEffect(() => {
         fetchUsers();
@@ -26,9 +41,9 @@ export default function UsersPage() {
     const fetchUsers = async () => {
         try {
             const response = await apiClient.get('/api/user/all');
-            setUsers(response.data.users || response.data || []);
+            const fetchedUsers = response.data.users || response.data || [];
+            setUsers(fetchedUsers);
         } catch (error: any) {
-            // Only show error for server errors, not for empty data
             if (error.response?.status !== 404) {
                 console.error('Error fetching users:', error);
                 if (error.response?.status >= 500) {
@@ -36,17 +51,90 @@ export default function UsersPage() {
                 }
             }
             setUsers([]);
-            console.error(error);
         } finally {
             setLoading(false);
         }
     };
 
-    const filteredUsers = users.filter(user =>
-        user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.phone?.includes(searchTerm)
-    );
+    const handleCreate = () => {
+        setSelectedUser(null);
+        setIsModalOpen(true);
+    };
+
+    const handleEdit = (user: User) => {
+        setSelectedUser(user);
+        setIsModalOpen(true);
+    };
+
+    const handleDelete = async (userId: string) => {
+        if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            await apiClient.delete(`/api/user/${userId}`);
+            toast.success('User deleted successfully');
+            fetchUsers();
+        } catch (error: any) {
+            console.error('Error deleting user:', error);
+            toast.error(error.response?.data?.message || 'Failed to delete user');
+        }
+    };
+
+    const handleViewAssessment = async (user: User) => {
+        setLoadingAssessment(true);
+        setSelectedUser(user); // Set context for name display
+        try {
+            const response = await apiClient.get(`/api/assessment/admin/user/${user._id}`);
+
+            if (response.data.success) {
+                setAssessmentData(response.data.data.assessment);
+                setIsAssessmentModalOpen(true);
+            } else {
+                toast.error('Could not load assessment');
+            }
+        } catch (error: any) {
+            // Handle 404 (Not Found) gracefully
+            if (error.response?.status === 404) {
+                toast('This user has not completed the assessment yet.', {
+                    icon: 'ℹ️',
+                    style: {
+                        borderRadius: '10px',
+                        background: '#333',
+                        color: '#fff',
+                    },
+                });
+            } else {
+                console.error('Error fetching assessment:', error);
+                toast.error('Failed to fetch assessment details');
+            }
+        } finally {
+            setLoadingAssessment(false);
+        }
+    };
+
+    const filteredUsers = users.filter(user => {
+        const name = user.displayName || user.name || '';
+        const email = user.email || '';
+        const phone = user.phone || '';
+        const term = searchTerm.toLowerCase();
+
+        return name.toLowerCase().includes(term) ||
+            email.toLowerCase().includes(term) ||
+            phone.includes(term);
+    });
+
+    const getPlanColor = (plan: string) => {
+        switch (plan?.toLowerCase()) {
+            case 'free': return 'bg-gray-100 text-gray-700';
+            case 'bronze': return 'bg-orange-100 text-orange-700';
+            case 'silver': return 'bg-slate-200 text-slate-700';
+            case 'gold1':
+            case 'gold2': return 'bg-yellow-100 text-yellow-700';
+            case 'diamond': return 'bg-cyan-100 text-cyan-700';
+            default: return 'bg-purple-100 text-purple-700';
+        }
+    };
 
     if (loading) {
         return (
@@ -64,7 +152,10 @@ export default function UsersPage() {
                     <h1 className="text-3xl font-bold text-secondary">Users Management</h1>
                     <p className="text-accent mt-1">Manage all platform users</p>
                 </div>
-                <button className="flex items-center space-x-2 px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-lg transition duration-200 font-medium">
+                <button
+                    onClick={handleCreate}
+                    className="flex items-center space-x-2 px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-lg transition duration-200 font-medium shadow-lg shadow-primary/30"
+                >
                     <UserPlus className="w-5 h-5" />
                     <span>Add User</span>
                 </button>
@@ -91,16 +182,16 @@ export default function UsersPage() {
                         <thead className="bg-gray-50 border-b border-gray-200">
                             <tr>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-accent uppercase tracking-wider">
-                                    Name
+                                    User Details
                                 </th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-accent uppercase tracking-wider">
-                                    Email
-                                </th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-accent uppercase tracking-wider">
-                                    Phone
+                                    Contact Info
                                 </th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-accent uppercase tracking-wider">
                                     Membership
+                                </th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-accent uppercase tracking-wider">
+                                    Status
                                 </th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-accent uppercase tracking-wider">
                                     Joined
@@ -121,26 +212,32 @@ export default function UsersPage() {
                                 filteredUsers.map((user) => (
                                     <tr key={user._id} className="hover:bg-gray-50 transition-colors">
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="font-medium text-secondary">{user.name || 'N/A'}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center space-x-2 text-accent">
-                                                <Mail className="w-4 h-4" />
-                                                <span>{user.email || 'N/A'}</span>
+                                            <div className="font-medium text-secondary text-base">
+                                                {user.displayName || user.name || 'N/A'}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center space-x-2 text-accent">
-                                                <Phone className="w-4 h-4" />
-                                                <span>{user.phone || 'N/A'}</span>
+                                            <div className="space-y-1">
+                                                <div className="flex items-center space-x-2 text-accent text-sm">
+                                                    <Mail className="w-3.5 h-3.5" />
+                                                    <span>{user.email || 'N/A'}</span>
+                                                </div>
+                                                <div className="flex items-center space-x-2 text-accent text-sm">
+                                                    <Phone className="w-3.5 h-3.5" />
+                                                    <span>{user.phone || 'N/A'}</span>
+                                                </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${user.membershipType === 'premium'
-                                                ? 'bg-primary/10 text-primary'
-                                                : 'bg-gray-100 text-accent'
+                                            <span className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center w-fit gap-1 ${getPlanColor(user.subscriptionPlan || user.membershipType || 'free')}`}>
+                                                {(user.subscriptionPlan !== 'free') && <Crown className="w-3 h-3" />}
+                                                {(user.subscriptionPlan || user.membershipType || 'Free').toUpperCase()}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`px-2 py-1 rounded text-xs font-medium ${user.isActive !== false ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                                                 }`}>
-                                                {user.membershipType || 'Free'}
+                                                {user.isActive !== false ? 'Active' : 'Inactive'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-accent text-sm">
@@ -148,10 +245,30 @@ export default function UsersPage() {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center space-x-2">
-                                                <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition">
+                                                <button
+                                                    onClick={() => handleViewAssessment(user)}
+                                                    disabled={loadingAssessment}
+                                                    className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition relative group"
+                                                    title="View Assessment"
+                                                >
+                                                    {loadingAssessment && selectedUser?._id === user._id ? (
+                                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                                    ) : (
+                                                        <FileText className="w-4 h-4" />
+                                                    )}
+                                                </button>
+                                                <button
+                                                    onClick={() => handleEdit(user)}
+                                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                                                    title="Edit User"
+                                                >
                                                     <Edit className="w-4 h-4" />
                                                 </button>
-                                                <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition">
+                                                <button
+                                                    onClick={() => handleDelete(user._id)}
+                                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                                                    title="Delete User"
+                                                >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
                                             </div>
@@ -163,6 +280,22 @@ export default function UsersPage() {
                     </table>
                 </div>
             </div>
+
+            {/* Create/Edit User Modal */}
+            <UserModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                user={selectedUser}
+                onSuccess={fetchUsers}
+            />
+
+            {/* View Assessment Modal */}
+            <AssessmentModal
+                isOpen={isAssessmentModalOpen}
+                onClose={() => setIsAssessmentModalOpen(false)}
+                assessment={assessmentData}
+                userName={selectedUser?.displayName || selectedUser?.name || 'User'}
+            />
         </div>
     );
 }

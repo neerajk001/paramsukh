@@ -105,20 +105,33 @@ export default function DashboardPage() {
                 })}
             </div>
 
+
             {/* Quick Actions */}
             <div className="bg-white rounded-xl p-6 shadow-md">
                 <h2 className="text-xl font-bold text-secondary mb-4">Quick Actions</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <button className="px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-lg transition duration-200 font-medium">
-                        Add User
+                    <button
+                        onClick={() => window.location.href = '/dashboard/users'}
+                        className="px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-lg transition duration-200 font-medium"
+                    >
+                        Manage Users
                     </button>
-                    <button className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg transition duration-200 font-medium">
+                    <button
+                        onClick={() => window.location.href = '/dashboard/courses'}
+                        className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg transition duration-200 font-medium"
+                    >
                         Create Course
                     </button>
-                    <button className="px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition duration-200 font-medium">
+                    <button
+                        onClick={() => window.location.href = '/dashboard/events'}
+                        className="px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition duration-200 font-medium"
+                    >
                         New Event
                     </button>
-                    <button className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition duration-200 font-medium">
+                    <button
+                        onClick={() => window.location.href = '/dashboard/products'}
+                        className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition duration-200 font-medium"
+                    >
                         Add Product
                     </button>
                 </div>

@@ -6,6 +6,134 @@ import { GroupMember } from '../../models/community.models.js';
 import { MEMBERSHIP_COURSE_ACCESS } from '../../models/enrollment.models.js';
 
 /**
+ * Create a new user (Admin only)
+ * POST /api/user/create
+ */
+export const createUserAdmin = async (req, res) => {
+  try {
+    const { displayName, email, phone, subscriptionPlan } = req.body;
+
+    if (!displayName || !phone) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name and Phone are required'
+      });
+    }
+
+    // Check if user exists
+    const query = [{ phone }];
+    if (email) query.push({ email });
+
+    const existingUser = await User.findOne({
+      $or: query
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'User with this phone or email already exists'
+      });
+    }
+
+    const user = new User({
+      displayName,
+      email,
+      phone,
+      subscriptionPlan: subscriptionPlan || 'free',
+      authProvider: 'phone', // Default since schema requires it
+      isActive: true
+    });
+
+    await user.save();
+
+    return res.status(201).json({
+      success: true,
+      message: 'User created successfully',
+      user
+    });
+  } catch (error) {
+    console.error('❌ Error creating user:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to create user',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Update user details (Admin only)
+ * PATCH /api/user/:id
+ */
+export const updateUserAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { displayName, email, phone, subscriptionPlan, isActive } = req.body;
+
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    if (displayName) user.displayName = displayName;
+    if (email) user.email = email;
+    if (phone) user.phone = phone;
+    if (subscriptionPlan) user.subscriptionPlan = subscriptionPlan;
+    if (typeof isActive === 'boolean') user.isActive = isActive;
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'User updated successfully',
+      user
+    });
+  } catch (error) {
+    console.error('❌ Error updating user:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update user',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Delete user (Admin only)
+ * DELETE /api/user/:id
+ */
+export const deleteUserAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findByIdAndDelete(id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'User deleted successfully'
+    });
+  } catch (error) {
+    console.error('❌ Error deleting user:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to delete user',
+      error: error.message
+    });
+  }
+};
+
+/**
  * Get all users (Admin only)
  * GET /api/user/all
  */
@@ -39,7 +167,7 @@ export const getUserById = async (req, res) => {
     const { id } = req.params;
 
     const user = await User.findById(id).select('-__v');
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -68,16 +196,16 @@ export const getUserById = async (req, res) => {
 export const updateUserMembership = async (req, res) => {
   try {
     const { id } = req.params;
-    const { 
-      subscriptionPlan, 
-      subscriptionStatus, 
-      subscriptionStartDate, 
+    const {
+      subscriptionPlan,
+      subscriptionStatus,
+      subscriptionStartDate,
       subscriptionEndDate,
-      autoEnroll 
+      autoEnroll
     } = req.body;
 
     const user = await User.findById(id);
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -96,7 +224,7 @@ export const updateUserMembership = async (req, res) => {
     // Auto-enroll in courses if requested
     if (autoEnroll && subscriptionPlan && subscriptionPlan !== 'free') {
       const courseTitles = MEMBERSHIP_COURSE_ACCESS[subscriptionPlan];
-      
+
       if (courseTitles && courseTitles.length > 0) {
         const courses = await Course.find({
           title: { $in: courseTitles },
@@ -105,18 +233,18 @@ export const updateUserMembership = async (req, res) => {
 
         // Enroll in courses
         for (const course of courses) {
-          const existingEnrollment = await Enrollment.findOne({ 
-            userId: id, 
-            courseId: course._id 
+          const existingEnrollment = await Enrollment.findOne({
+            userId: id,
+            courseId: course._id
           });
-          
+
           if (!existingEnrollment) {
             await Enrollment.create({
               userId: id,
               courseId: course._id,
               currentVideoId: course.videos.length > 0 ? course.videos[0]._id : null
             });
-            
+
             course.enrollmentCount += 1;
             await course.save();
           }
@@ -125,7 +253,7 @@ export const updateUserMembership = async (req, res) => {
         // Add to community groups
         for (const course of courses) {
           let group = await Group.findOne({ courseId: course._id });
-          
+
           if (!group) {
             group = await Group.create({
               name: `${course.title} Community`,
@@ -136,9 +264,9 @@ export const updateUserMembership = async (req, res) => {
             });
           }
 
-          const existingMembership = await GroupMember.findOne({ 
-            groupId: group._id, 
-            userId: id 
+          const existingMembership = await GroupMember.findOne({
+            groupId: group._id,
+            userId: id
           });
 
           if (!existingMembership) {
@@ -210,7 +338,7 @@ export const getUserPayments = async (req, res) => {
     const { userId } = req.params;
 
     const user = await User.findById(userId).select('payments');
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -246,7 +374,7 @@ export const getUserActivity = async (req, res) => {
 
     // This is a placeholder - implement activity logging as needed
     // You could track: logins, enrollments, course progress, purchases, etc.
-    
+
     const activities = [];
 
     return res.status(200).json({
