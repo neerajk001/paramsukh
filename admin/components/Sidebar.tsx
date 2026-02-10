@@ -13,6 +13,7 @@ import {
     Crown
 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
 const menuItems = [
@@ -34,9 +35,17 @@ export default function Sidebar() {
     return (
         <aside className="w-64 bg-secondary text-white flex flex-col">
             {/* Logo */}
-            <div className="p-6 border-b border-secondary-light">
-                <h1 className="text-2xl font-bold text-primary">ParamSukh</h1>
-                <p className="text-sm text-accent-light mt-1">Admin Panel</p>
+            <div className="p-6 border-b border-secondary-light flex flex-col items-center">
+                <div className="relative w-full h-24 mb-2">
+                    <Image
+                        src="/paramsukh.png"
+                        alt="ParamSukh Logo"
+                        fill
+                        className="object-contain"
+                        priority
+                    />
+                </div>
+                <p className="text-sm text-accent-light">Admin Panel</p>
             </div>
 
             {/* Navigation */}
@@ -51,8 +60,8 @@ export default function Sidebar() {
                                 <Link
                                     href={item.href}
                                     className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
-                                            ? 'bg-primary text-white shadow-lg'
-                                            : 'text-accent-light hover:bg-secondary-light hover:text-white'
+                                        ? 'bg-primary text-white shadow-lg'
+                                        : 'text-accent-light hover:bg-secondary-light hover:text-white'
                                         }`}
                                 >
                                     <Icon className="w-5 h-5" />
