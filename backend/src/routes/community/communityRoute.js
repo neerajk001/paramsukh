@@ -1,5 +1,6 @@
 import express from 'express';
 import { protectedRoutes } from '../../middleware/protectedRoutes.js';
+import { adminAuth } from '../../middleware/adminAuth.js';
 import { contentCreationLimiter } from '../../middleware/rateLimiter.js';
 import { validateCreatePost, validateCreateComment } from '../../middleware/validators.js';
 import {
@@ -13,10 +14,14 @@ import {
   toggleCommentLike,
   deletePost
 } from '../../controller/community/community.controller.js';
+import { getAllPosts } from '../../controller/community/admin.community.controller.js';
 
 const router = express.Router();
 
-// All community routes require authentication
+// Admin routes
+router.get('/all', adminAuth, getAllPosts);
+
+// All other community routes require authentication
 router.use(protectedRoutes);
 
 // ========================================

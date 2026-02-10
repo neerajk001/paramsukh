@@ -15,7 +15,7 @@ export const createOrder = async (req, res) => {
 
     // Get cart
     const cart = await Cart.findOne({ user: userId }).populate('items.product');
-    
+
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({
         success: false,
@@ -123,6 +123,53 @@ export const createOrder = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to create order',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get all orders (Admin only)
+// @route   GET /api/orders/all
+// @access  Admin
+export const getAllOrders = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, status, search } = req.query;
+
+    const query = {};
+    if (status) query.status = status;
+
+    if (search) {
+      query.$or = [
+        { orderNumber: { $regex: search, $options: 'i' } },
+        { 'deliveryAddress.fullName': { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const orders = await Order.find(query)
+      .populate('user', 'displayName email phone')
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .lean();
+
+    const total = await Order.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        orders,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(total / limit),
+          totalItems: total
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Get All Orders Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve orders',
       error: error.message
     });
   }

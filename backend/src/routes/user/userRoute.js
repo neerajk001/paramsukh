@@ -11,11 +11,52 @@ import {
   deleteAccount,
   purchaseMembership
 } from '../../controller/user/profile.controller.js';
+import {
+  getAllUsers,
+  getUserById,
+  updateUserMembership,
+  getUserEnrollments,
+  getUserPayments,
+  getUserActivity
+} from '../../controller/user/admin.controller.js';
 import { protectedRoutes } from '../../middleware/protectedRoutes.js';
+import { adminAuth } from '../../middleware/adminAuth.js';
 
 const router = express.Router();
 
-// All user routes require authentication
+// ========================================
+// Admin Routes (Requires X-Admin-API-Key header)
+// ========================================
+
+// Get all users (Admin only)
+// GET /api/user/all
+router.get('/all', adminAuth, getAllUsers);
+
+// Get user by ID (Admin only)
+// GET /api/user/:id
+router.get('/:id', adminAuth, getUserById);
+
+// Update user membership (Admin only)
+// PATCH /api/user/:id/membership
+router.patch('/:id/membership', adminAuth, updateUserMembership);
+
+// Get user enrollments (Admin only)
+// GET /api/user/:userId/enrollments
+router.get('/:userId/enrollments', adminAuth, getUserEnrollments);
+
+// Get user payments (Admin only)
+// GET /api/user/:userId/payments
+router.get('/:userId/payments', adminAuth, getUserPayments);
+
+// Get user activity (Admin only)
+// GET /api/user/:userId/activity
+router.get('/:userId/activity', adminAuth, getUserActivity);
+
+// ========================================
+// User Routes (Requires authentication)
+// ========================================
+
+// All remaining user routes require authentication
 router.use(protectedRoutes);
 
 // ========================================

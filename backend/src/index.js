@@ -3,7 +3,6 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import connectDatabase from './config/database.js';
-import { setupAdmin } from './config/admin.js';
 import apiRoutes from './routes/index.js';
 import coursesRoutes from './routes/courses/courseRoute.js';
 import eventsRoutes from './routes/events/eventRoute.js';
@@ -34,10 +33,6 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-// Setup AdminJS
-const { admin, adminRouter } = setupAdmin();
-app.use(admin.options.rootPath, adminRouter);
-
 // Routes
 app.use('/api/auth', apiRoutes);
 app.use('/api/courses', coursesRoutes);
@@ -59,7 +54,7 @@ app.use('/api/upload', uploadRoutes);
 
 // Test route
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: '🚀 ParamSukh API v2.0',
     version: '2.0.0',
     endpoints: {
@@ -211,6 +206,6 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, async () => {
-    console.log(`🚀 Server is running on port ${PORT}`);
-    await connectDatabase();
+  console.log(`🚀 Server is running on port ${PORT}`);
+  await connectDatabase();
 });

@@ -56,10 +56,47 @@ const userSchema = new mongoose.Schema({
     enum: ['active', 'inactive', 'trial', 'cancelled'],
     default: 'trial'
   },
+  subscriptionStartDate: {
+    type: Date,
+    default: null
+  },
+  subscriptionEndDate: {
+    type: Date,
+    default: null
+  },
   trialEndsAt: {
     type: Date,
     default: () => new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) // 14 days
   },
+  
+  // Payment history
+  payments: [{
+    orderId: {
+      type: String,
+      required: true
+    },
+    paymentId: {
+      type: String,
+      required: true
+    },
+    amount: {
+      type: Number,
+      required: true
+    },
+    plan: {
+      type: String,
+      required: true
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'completed', 'failed', 'refunded'],
+      default: 'pending'
+    },
+    date: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   
   // User preferences
   preferences: {

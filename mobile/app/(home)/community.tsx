@@ -22,31 +22,28 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '@/store/authStore';
 import AssessmentModal from '@/components/AssessmentModal';
 import * as ImagePicker from 'expo-image-picker';
+import { useCommunityStore, Group } from '@/store/communityStore';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SIDEBAR_WIDTH = SCREEN_WIDTH * 0.75;
 
-interface Post {
-  id: number;
-  user: string;
-  userAvatar: string;
-  content: string;
-  image?: string;
-  video?: string;
-  audio?: string;
-  postType?: 'image' | 'video' | 'audio' | 'text';
-  likes: number;
-  comments: number;
-  shares: number;
-  timeAgo: string;
-  liked: boolean;
-}
-
 type ViewType = 'feed' | 'groups' | 'message';
 
-export default function CommunityScreen() {     
+export default function CommunityScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
+  const {
+    posts,
+    groups,
+    isLoading: isStoreLoading,
+    fetchMyGroups,
+    fetchGroupPosts,
+    createPost: storeCreatePost,
+    togglePostLike: storeToggleLike
+  } = useCommunityStore();
+
+  const [activeGroup, setActiveGroup] = useState<Group | null>(null);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showCreatePost, setShowCreatePost] = useState(false);
@@ -82,80 +79,29 @@ export default function CommunityScreen() {
     router.push('/(home)/notifications');
   };
 
-  const [posts, setPosts] = useState<Post[]>([
-    {                              
-      id: 1,                              
-      user: 'Raj Kumar',    
-      userAvatar: '👤',                    
-      content: 'Just completed my morning meditation session. Feeling so peaceful and energized! 🧘‍♂️✨',
-      image: '🖼️',
-      postType: 'image',
-      likes: 42,
-      comments: 8,
-      shares: 3,
-      timeAgo: '2h ago',
-      liked: false,
-    },
-    {
-      id: 2,
-      user: 'Priya Sharma',
-      userAvatar: '👤',
-      content: 'Attended an amazing spiritual discourse today. The teachings were truly enlightening! 🙏',
-      postType: 'text',
-      likes: 67,
-      comments: 15,
-      shares: 7,
-      timeAgo: '5h ago',
-      liked: true,
-    },
-    {
-      id: 3,
-      user: 'Amit Patel',
-      userAvatar: '👤',
-      content: 'Sharing some beautiful moments from today\'s temple visit. The atmosphere was divine! 🛕',
-      image: '🖼️',
-      postType: 'image',
-      likes: 89,
-      comments: 22,
-      shares: 12,
-      timeAgo: '1d ago',                        
-      liked: false,
-    },
-    {
-      id: 4,
-      user: 'Sita Devi',
-      userAvatar: '👤',
-      content: 'Listening to beautiful bhajans today 🎵',
-      video: '🎥',
-      postType: 'video',
-      likes: 34,
-      comments: 5,
-      shares: 2,
-      timeAgo: '3h ago',
-      liked: false,
-    },
-    {
-      id: 5,
-      user: 'Krishna Das',
-      userAvatar: '👤',
-      content: 'Morning meditation audio guide 🎧',
-      audio: '🎵',
-      postType: 'audio',
-      likes: 56,
-      comments: 12,
-      shares: 8,
-      timeAgo: '6h ago',
-      liked: true,
-    },
-  ]);                         
-
   const [showAssessment, setShowAssessment] = useState(false);
   const [assessmentCompleted, setAssessmentCompleted] = useState(false);
   const [showPostTypeSelector, setShowPostTypeSelector] = useState(false);
-                                       
-  useEffect(() => {                                                     
-    checkAssessmentStatus();            
+
+  useEffect(() => {
+    checkAssessmentStatus();
+    // Fetch user groups on mount
+    fetchMyGroups();
   }, []);
+
+  // When groups are loaded, auto-select first group for now (or 'All' if backend supports global feed)
+  useEffect(() => {
+    if (groups.length > 0 && !activeGroup) {
+      setActiveGroup(groups[0]);
+    }
+  }, [groups]);
+
+  // When active group changes, fetch its posts
+  useEffect(() => {
+    if (activeGroup) {
+      fetchGroupPosts(activeGroup._id);
+    }
+  }, [activeGroup]);
 
   useEffect(() => {
     Animated.timing(sidebarAnimation, {
@@ -172,15 +118,15 @@ export default function CommunityScreen() {
   const handleViewChange = (view: ViewType) => {
     setCurrentView(view);
     setShowSidebar(false);
-  };        
+  };
   const checkAssessmentStatus = async () => {
-    try {                                                              
+    try {
       const completed = await AsyncStorage.getItem('assessment_completed');
       setAssessmentCompleted(completed === 'true');
     } catch (error) {
       console.error('Error checking assessment status:', error);
-    } 
-  };          
+    }
+  };
 
   const handleAssessmentComplete = async (answers: Record<string, string | boolean>) => {
     try {
@@ -188,14 +134,14 @@ export default function CommunityScreen() {
       await AsyncStorage.setItem('assessment_answers', JSON.stringify(answers));
       setAssessmentCompleted(true);
       setShowAssessment(false);
-      console.log('Assessment completed:', answers);               
+      console.log('Assessment completed:', answers);
     } catch (error) {
-      console.error('Error saving assessment:', error); 
+      console.error('Error saving assessment:', error);
     }
-  };                 
- 
- const handlePickImage = async () => {
-    try {     
+  };
+
+  const handlePickImage = async () => {
+    try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert('Permission needed', 'Please grant permission to access your photos');
@@ -243,37 +189,50 @@ export default function CommunityScreen() {
     }
   };
 
-  const publishPost = (type: 'feed' | 'channel') => {
-    const newPost: Post = {
-      id: posts.length + 1,
-      user: 'You',
-      userAvatar: '👤',
-      content: postContent,
-      image: mediaType === 'image' ? selectedMedia || undefined : undefined,
-      video: mediaType === 'video' ? selectedMedia || undefined : undefined,
-      likes: 0,
-      comments: 0,
-      shares: 0,
-      timeAgo: 'Just now',
-      liked: false,
-    };
+  const publishPost = async (type: 'feed' | 'channel') => {
+    if (!activeGroup) {
+      Alert.alert('Error', 'No active group selected to post to.');
+      return;
+    }
 
-    setPosts([newPost, ...posts]);
-    setPostContent('');
-    setSelectedMedia(null);
-    setMediaType(null);
-    setPostType('feed');
-    setShowCreatePost(false);
-    setShowPostTypeSelector(false);
-    
-    // Show confirmation based on post type
-    Alert.alert(
-      'Post Published',
-      type === 'feed' 
-        ? 'Your post has been published to the feed!' 
-        : 'Your post has been published to the channel!',
-      [{ text: 'OK' }]
-    );
+    try {
+      setIsLoading(true);
+      let uploadedImageUrls: string[] = [];
+
+      // Upload media to Cloudinary if present
+      if (selectedMedia && mediaType) {
+        const uploadedUrl = await useCommunityStore.getState().uploadMedia(selectedMedia, mediaType);
+
+        if (uploadedUrl) {
+          uploadedImageUrls = [uploadedUrl];
+        } else {
+          Alert.alert('Upload Failed', 'Failed to upload media. Please try again.');
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      const success = await storeCreatePost(activeGroup._id, postContent, uploadedImageUrls.length > 0 ? uploadedImageUrls : undefined);
+
+      if (success) {
+        setPostContent('');
+        setSelectedMedia(null);
+        setMediaType(null);
+        setPostType('feed');
+        setShowCreatePost(false);
+        setShowPostTypeSelector(false);
+        setIsLoading(false);
+
+        Alert.alert('Success', 'Your post has been published!');
+      } else {
+        setIsLoading(false);
+        Alert.alert('Error', 'Failed to publish post');
+      }
+    } catch (error) {
+      console.error('Publish Error:', error);
+      setIsLoading(false);
+      Alert.alert('Error', 'An unexpected error occurred');
+    }
   };
 
   const handleCreatePost = () => {
@@ -291,20 +250,16 @@ export default function CommunityScreen() {
     publishPost(type);
   };
 
-  const toggleLike = (postId: number) => {
-    setPosts(posts.map(post => 
-      post.id === postId 
-        ? { ...post, liked: !post.liked, likes: post.liked ? post.likes - 1 : post.likes + 1 }
-        : post
-    ));
+  const toggleLike = async (postId: string) => {
+    await storeToggleLike(postId);
   };
 
   const getViewTitle = () => {
     switch (currentView) {
       case 'feed':
-        return 'Feed';
+        return activeGroup ? activeGroup.name : 'Community Feed';
       case 'groups':
-        return 'Groups';
+        return 'My Groups';
       case 'message':
         return 'Messages';
       default:
@@ -318,10 +273,23 @@ export default function CommunityScreen() {
   };
 
   const getFilteredPosts = () => {
+    // If store 'posts' has 'postType', filter by it. 
+    // If backend doesn't return 'postType', we might need to infer it from 'images'/'video' fields.
+
     if (selectedPostFilter === 'all') {
       return posts;
     }
-    return posts.filter(post => post.postType === selectedPostFilter);
+
+    return posts.filter(post => {
+      // Inference logic if postType missing
+      if (post.postType) return post.postType === selectedPostFilter;
+
+      if (selectedPostFilter === 'image' && post.images && post.images.length > 0) return true;
+      if (selectedPostFilter === 'video' && post.video) return true;
+      if (selectedPostFilter === 'text' && !post.images && !post.video) return true;
+
+      return false;
+    });
   };
 
   return (
@@ -329,7 +297,7 @@ export default function CommunityScreen() {
       {/* Custom Header with Menu Button */}
       <View style={styles.customHeader}>
         <View style={styles.headerContent}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.menuButton}
             onPress={toggleSidebar}
             activeOpacity={0.7}
@@ -337,10 +305,10 @@ export default function CommunityScreen() {
             <Ionicons name="menu" size={28} color="#111827" />
           </TouchableOpacity>
           <View style={styles.headerTitleContainer}>
-            <Text style={styles.headerTitle}>{getViewTitle()}</Text>
+            <Text style={styles.headerTitle} numberOfLines={1}>{getViewTitle()}</Text>
           </View>
           <View style={styles.headerRightButtons}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.notificationButton}
               onPress={navigateToNotifications}
               activeOpacity={0.7}
@@ -353,7 +321,7 @@ export default function CommunityScreen() {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.profileButton}
               onPress={navigateToProfile}
               activeOpacity={0.7}
@@ -416,7 +384,7 @@ export default function CommunityScreen() {
 
           <View style={styles.sidebarSection}>
             <Text style={styles.sidebarSectionTitle}>Sections</Text>
-            
+
             <TouchableOpacity
               style={[
                 styles.sidebarItem,
@@ -438,6 +406,28 @@ export default function CommunityScreen() {
                 Groups
               </Text>
             </TouchableOpacity>
+
+            {/* Render Actual Groups List in Sidebar if expanded or separate section */}
+            {groups.length > 0 && (
+              <View style={{ marginLeft: 20, marginTop: 5 }}>
+                {groups.map(g => (
+                  <TouchableOpacity
+                    key={g._id}
+                    style={{ paddingVertical: 8, flexDirection: 'row', alignItems: 'center' }}
+                    onPress={() => {
+                      setActiveGroup(g);
+                      setCurrentView('feed');
+                      setShowSidebar(false);
+                    }}
+                  >
+                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: activeGroup?._id === g._id ? '#3B82F6' : '#E5E7EB', marginRight: 10 }} />
+                    <Text style={{ fontSize: 13, color: activeGroup?._id === g._id ? '#1F2937' : '#6B7280' }} numberOfLines={1}>
+                      {g.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
 
             <TouchableOpacity
               style={[
@@ -467,7 +457,7 @@ export default function CommunityScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Assessment Banner - Show if not completed */}
         {!assessmentCompleted && (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.assessmentBanner}
             onPress={() => setShowAssessment(true)}
             activeOpacity={0.8}
@@ -521,14 +511,16 @@ export default function CommunityScreen() {
 
         {/* Create Post Button - Only show on Feed view */}
         {currentView === 'feed' && (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.createPostButton}
             onPress={() => setShowCreatePost(true)}
             activeOpacity={0.8}
           >
             <View style={styles.createPostContent}>
               <Ionicons name="add-circle" size={24} color="#3B82F6" />
-              <Text style={styles.createPostText}>Share your thoughts, photos, or videos...</Text>
+              <Text style={styles.createPostText}>
+                {activeGroup ? `Share in ${activeGroup.name}...` : 'Select a group to post...'}
+              </Text>
             </View>
             <View style={styles.mediaIcons}>
               <Ionicons name="image-outline" size={20} color="#6B7280" style={{ marginRight: 12 }} />
@@ -542,91 +534,114 @@ export default function CommunityScreen() {
           <>
             {/* Posts Feed */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Community Posts</Text>
-              
-              {getFilteredPosts().map((post) => (
-            <View key={post.id} style={styles.postCard}>
-              {/* Post Header */}
-              <View style={styles.postHeader}>
-                <View style={styles.userInfo}>
-                  <View style={styles.userAvatar}>
-                    <Text style={styles.avatarText}>{post.userAvatar}</Text>
+              <Text style={styles.sectionTitle}>{activeGroup ? `${activeGroup.name} Posts` : 'Community Posts'}</Text>
+
+              {!activeGroup && groups.length === 0 && !isStoreLoading && (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyStateText}>Join a course to access community groups.</Text>
+                </View>
+              )}
+
+              {isStoreLoading ? (
+                <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 20 }} />
+              ) : (
+                getFilteredPosts().map((post) => (
+                  <View key={post._id} style={styles.postCard}>
+                    {/* Post Header */}
+                    <View style={styles.postHeader}>
+                      <View style={styles.userInfo}>
+                        <View style={styles.userAvatar}>
+                          {/* Use actual avatar or fallback */}
+                          <Image
+                            source={{ uri: post.author.photoURL || 'https://via.placeholder.com/40' }}
+                            style={{ width: 40, height: 40, borderRadius: 20 }}
+                          />
+                        </View>
+                        <View>
+                          <Text style={styles.userName}>{post.author.displayName || 'User'}</Text>
+                          <Text style={styles.postTime}>{/* format date */ new Date(post.createdAt).toLocaleDateString()}</Text>
+                        </View>
+                      </View>
+                      <TouchableOpacity>
+                        <Ionicons name="ellipsis-horizontal" size={20} color="#6B7280" />
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* Post Content */}
+                    <Text style={styles.postContent}>{post.content}</Text>
+
+                    {/* Post Image/Video */}
+                    {post.images && post.images.length > 0 && (
+                      <View style={styles.postMedia}>
+                        {/* Simplified image render - iterate if multiple */}
+                        <Image source={{ uri: post.images[0] }} style={{ width: '100%', height: 200, borderRadius: 8 }} resizeMode="cover" />
+                      </View>
+                    )}
+
+                    {/* Post Actions */}
+                    <View style={styles.postActions}>
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => toggleLike(post._id)}
+                      >
+                        <Ionicons
+                          name={post.userLiked ? "heart" : "heart-outline"}
+                          size={22}
+                          color={post.userLiked ? "#EF4444" : "#6B7280"}
+                        />
+                        <Text style={[styles.actionText, post.userLiked && styles.likedText]}>
+                          {post.likeCount}
+                        </Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity style={styles.actionButton}>
+                        <Ionicons name="chatbubble-outline" size={20} color="#6B7280" />
+                        <Text style={styles.actionText}>{post.commentCount}</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity style={styles.actionButton}>
+                        <Ionicons name="share-social-outline" size={20} color="#6B7280" />
+                        <Text style={styles.actionText}>0</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                  <View>
-                    <Text style={styles.userName}>{post.user}</Text>
-                    <Text style={styles.postTime}>{post.timeAgo}</Text>
-                  </View>
-                </View>
-                <TouchableOpacity>
-                  <Ionicons name="ellipsis-horizontal" size={20} color="#6B7280" />
-                </TouchableOpacity>
-              </View>
-
-              {/* Post Content */}
-              <Text style={styles.postContent}>{post.content}</Text>
-
-              {/* Post Image/Video */}
-              {post.image && (
-                <View style={styles.postMedia}>
-                  <Text style={styles.mediaPlaceholder}>{post.image}</Text>
-                  <Text style={styles.mediaLabel}>Image</Text>
-                </View>
+                ))
               )}
-              {post.video && (
-                <View style={styles.postMedia}>
-                  <Text style={styles.mediaPlaceholder}>🎥</Text>
-                  <Text style={styles.mediaLabel}>Video</Text>
-                </View>
-              )}
-              {post.audio && (
-                <View style={styles.postMedia}>
-                  <Text style={styles.mediaPlaceholder}>🎵</Text>
-                  <Text style={styles.mediaLabel}>Audio</Text>
-                </View>
-              )}
-
-              {/* Post Actions */}
-              <View style={styles.postActions}>
-                <TouchableOpacity 
-                  style={styles.actionButton}
-                  onPress={() => toggleLike(post.id)}
-                >
-                  <Ionicons 
-                    name={post.liked ? "heart" : "heart-outline"} 
-                    size={22} 
-                    color={post.liked ? "#EF4444" : "#6B7280"} 
-                  />
-                  <Text style={[styles.actionText, post.liked && styles.likedText]}>
-                    {post.likes}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.actionButton}>
-                  <Ionicons name="chatbubble-outline" size={20} color="#6B7280" />
-                  <Text style={styles.actionText}>{post.comments}</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.actionButton}>
-                  <Ionicons name="share-social-outline" size={20} color="#6B7280" />
-                  <Text style={styles.actionText}>{post.shares}</Text>
-                </TouchableOpacity>
-              </View>
             </View>
-          ))}
-        </View>
           </>
         )}
 
         {currentView === 'groups' && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Groups</Text>
-            <View style={styles.emptyState}>
-              <Ionicons name="people-outline" size={64} color="#9CA3AF" />
-              <Text style={styles.emptyStateText}>No groups yet</Text>
-              <Text style={styles.emptyStateSubtext}>
-                Join or create groups to connect with others
-              </Text>
-            </View>
+            {groups.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Ionicons name="people-outline" size={64} color="#9CA3AF" />
+                <Text style={styles.emptyStateText}>No groups yet</Text>
+                <Text style={styles.emptyStateSubtext}>
+                  Join courses to be added to their community groups.
+                </Text>
+              </View>
+            ) : (
+              groups.map(g => (
+                <TouchableOpacity
+                  key={g._id}
+                  style={styles.groupCard} // Need to define or reuse postCard style
+                  onPress={() => {
+                    setActiveGroup(g);
+                    setCurrentView('feed');
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16 }}>
+                    <View style={{ width: 50, height: 50, borderRadius: 8, backgroundColor: '#E5E7EB', marginRight: 16 }} />
+                    <View>
+                      <Text style={{ fontSize: 16, fontWeight: '600', color: '#111827' }}>{g.name}</Text>
+                      <Text style={{ fontSize: 13, color: '#6B7280' }}>{g.memberCount} members</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))
+            )}
           </View>
         )}
 
@@ -693,7 +708,7 @@ export default function CommunityScreen() {
             )}
 
             <View style={styles.mediaButtons}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.mediaButton}
                 onPress={handlePickImage}
               >
@@ -701,7 +716,7 @@ export default function CommunityScreen() {
                 <Text style={styles.mediaButtonText}>Photo</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.mediaButton}
                 onPress={handlePickVideo}
               >
@@ -1079,7 +1094,7 @@ export default function CommunityScreen() {
         <View style={styles.postTypeModalOverlay}>
           <View style={styles.postTypeModalContent}>
             <Text style={styles.postTypeModalTitle}>Where would you like to post?</Text>
-            
+
             <TouchableOpacity
               style={styles.postTypeOption}
               onPress={() => handlePostTypeSelection('feed')}
@@ -1515,6 +1530,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  groupCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+    overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },

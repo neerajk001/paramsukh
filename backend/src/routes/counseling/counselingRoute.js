@@ -1,5 +1,6 @@
 import express from 'express';
 import { protectedRoutes } from '../../middleware/protectedRoutes.js';
+import { adminAuth } from '../../middleware/adminAuth.js';
 import {
   getAvailability,
   bookCounseling,
@@ -10,10 +11,14 @@ import {
   updatePaymentStatus,
   submitFeedback
 } from '../../controller/counseling/counseling.controller.js';
+import { getAllBookings } from '../../controller/counseling/admin.counseling.controller.js';
 
 const router = express.Router();
 
-// All routes are protected (require authentication)
+// Admin routes
+router.get('/all', adminAuth, getAllBookings);
+
+// All other routes are protected (require authentication)
 router.use(protectedRoutes);
 
 // ========================================

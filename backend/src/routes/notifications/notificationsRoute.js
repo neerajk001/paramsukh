@@ -1,5 +1,6 @@
 import express from 'express';
 import { protectedRoutes } from '../../middleware/protectedRoutes.js';
+import { adminAuth } from '../../middleware/adminAuth.js';
 import {
   getNotifications,
   getUnreadCount,
@@ -9,10 +10,14 @@ import {
   deleteAllNotifications,
   createTestNotification
 } from '../../controller/notifications/notifications.controller.js';
+import { getAllNotifications } from '../../controller/notifications/admin.notifications.controller.js';
 
 const router = express.Router();
 
-// All routes are protected (require authentication)
+// Admin routes
+router.get('/all', adminAuth, getAllNotifications);
+
+// All other routes are protected (require authentication)
 router.use(protectedRoutes);
 
 // ========================================

@@ -1,7 +1,9 @@
 import express from 'express';
 import { protectedRoutes } from '../../middleware/protectedRoutes.js';
+import { adminAuth } from '../../middleware/adminAuth.js';
 import {
   createOrder,
+  getAllOrders,
   getMyOrders,
   getOrderDetails,
   cancelOrder,
@@ -12,7 +14,10 @@ import {
 
 const router = express.Router();
 
-// All routes are protected
+// Admin routes
+router.get('/all', adminAuth, getAllOrders);
+
+// All other routes are protected
 router.use(protectedRoutes);
 
 router.post('/create', createOrder);

@@ -2,23 +2,29 @@ import express from 'express';
 import { createCourse, deleteCourse, updateCourse, getAllCourses, getCourseById, getCourseBySlug } from '../../controller/courses/courses.controller.js';
 import { addPdfToCourse, getCoursePdfs, updatePdf, deletePdf, getPdfById } from '../../controller/courses/pdf.controller.js';
 import { addVideoToCourse, getCourseVideos, updateVideo, deleteVideo, getVideoById } from '../../controller/courses/videos.controller.js';
-import { 
-  addLiveSessionToCourse, 
-  getCourseLiveSessions, 
-  getLiveSessionById, 
-  updateLiveSession, 
+import {
+  addLiveSessionToCourse,
+  getCourseLiveSessions,
+  getLiveSessionById,
+  updateLiveSession,
   deleteLiveSession,
   addSessionRecording
 } from '../../controller/courses/session.controller.js';
-     
-const router = express.Router();      
+import {
+  markVideoComplete,
+  markPdfComplete,
+  getEnrollmentProgress
+} from '../../controller/courses/progress.controller.js';
+import { protectedRoutes } from '../../middleware/protectedRoutes.js';
+
+const router = express.Router();
 
 router.post('/create', createCourse);
 router.delete('/delete/:id', deleteCourse);
-router.put('/update/:id', updateCourse);  
+router.put('/update/:id', updateCourse);
 router.get('/all', getAllCourses);
 router.get('/:id', getCourseById);
-router.get('/:slug', getCourseBySlug);  
+router.get('/:slug', getCourseBySlug);
 
 
 router.post('/:courseId/videos', addVideoToCourse);
@@ -35,11 +41,16 @@ router.put('/:courseId/pdfs/:pdfId', updatePdf);
 router.delete('/:courseId/pdfs/:pdfId', deletePdf);
 
 // livesession routes
-router.post('/:courseId/livesessions', addLiveSessionToCourse);  
+router.post('/:courseId/livesessions', addLiveSessionToCourse);
 router.get('/:courseId/livesessions', getCourseLiveSessions);
 router.get('/:courseId/livesessions/:liveSessionId', getLiveSessionById);
 router.put('/:courseId/livesessions/:liveSessionId', updateLiveSession);
 router.delete('/:courseId/livesessions/:liveSessionId', deleteLiveSession);
 router.patch('/:courseId/livesessions/:liveSessionId/recording', addSessionRecording);
+
+// Progress tracking routes (require authentication)
+router.get('/:courseId/progress', protectedRoutes, getEnrollmentProgress);
+router.post('/:courseId/progress/video/:videoId', protectedRoutes, markVideoComplete);
+router.post('/:courseId/progress/pdf/:pdfId', protectedRoutes, markPdfComplete);
 
 export default router;

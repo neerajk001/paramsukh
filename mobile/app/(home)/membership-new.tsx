@@ -1,11 +1,22 @@
-import React, { useState } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { ScrollView, Text, TouchableOpacity, View, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../../components/Header';
+import { useMembershipStore } from '../../store/membershipStore';
+import { useRouter } from 'expo-router';
 
 export default function MembershipScreen() {
+  const router = useRouter();
+  const { currentSubscription, isLoading, isPurchasing, fetchCurrentSubscription, purchaseMembership, error } = useMembershipStore();
+
   const [selectedPlan, setSelectedPlan] = useState('silver');
   const [pricingType, setPricingType] = useState<'regular' | 'offer'>('offer');
+
+  useEffect(() => {
+    fetchCurrentSubscription();
+  }, []);
+
+  // Only show 3 plans as per backend support
 
   const plans = [
     {
@@ -27,6 +38,7 @@ export default function MembershipScreen() {
         { text: 'All 5 courses', included: false },
       ],
       popular: false,
+      courseAccess: ['Physical Wellness']
     },
     {
       id: 'copper',
@@ -47,6 +59,7 @@ export default function MembershipScreen() {
         { text: 'All 5 courses', included: false },
       ],
       popular: false,
+      courseAccess: ['Physical Wellness', 'Spirituality & Mantra Yoga', 'Mental Wellness']
     },
     {
       id: 'silver',
@@ -56,7 +69,7 @@ export default function MembershipScreen() {
       emoji: '🥈',
       color: '#C0C0C0',
       gradient: ['#F3F4F6', '#E5E7EB'],
-      tagline: 'Most Popular',
+      tagline: 'Most Popular - All Courses Included',
       features: [
         { text: 'All 5 basic courses included', included: true },
         { text: 'Group follow-up for all courses', included: true },
@@ -67,147 +80,70 @@ export default function MembershipScreen() {
         { text: 'Advanced course access', included: true },
       ],
       popular: true,
-    },
-    {
-      id: 'gold_2',
-      name: 'Gold Grade 2',
-      regularPrice: 50000,
-      offerPrice: 27999,
-      emoji: '🥇',
-      color: '#FFD700',
-      gradient: ['#FEF3C7', '#FCD34D'],
-      tagline: 'Complete Learning',
-      features: [
-        { text: 'All 5 courses free', included: true },
-        { text: 'Group follow-up for all courses', included: true },
-        { text: 'Premium community features', included: true },
-        { text: 'VIP event access', included: true },
-        { text: 'Free membership counseling', included: true },
-        { text: 'Enhanced bonus points (15 per achievement)', included: true },
-        { text: 'Priority support', included: true },
-      ],
-      popular: false,
-    },
-    {
-      id: 'gold_1',
-      name: 'Gold Grade 1',
-      regularPrice: null,
-      offerPrice: null,
-      emoji: '👑',
-      color: '#F59E0B',
-      gradient: ['#FEF3C7', '#FDE68A'],
-      tagline: 'Premium Experience',
-      features: [
-        { text: 'All 5 courses free', included: true },
-        { text: 'Bhagwan & Sidhha Chakra Maha Yantra', included: true },
-        { text: 'Group follow-up for all courses', included: true },
-        { text: 'Exclusive spiritual items', included: true },
-        { text: 'Free 1-on-1 counseling with Gurudev', included: true },
-        { text: 'Maximum bonus points (20 per achievement)', included: true },
-        { text: 'Lifetime priority support', included: true },
-      ],
-      popular: false,
-      specialPrice: 'Contact for pricing',
-    },
-    {
-      id: 'diamond',
-      name: 'Diamond',
-      regularPrice: null,
-      offerPrice: null,
-      emoji: '💎',
-      color: '#3B82F6',
-      gradient: ['#EFF6FF', '#DBEAFE'],
-      tagline: 'By Certification',
-      levels: ['Contributor', 'Captain', 'Counselor', 'Commander'],
-      features: [
-        { text: 'All Gold Grade 1 benefits', included: true },
-        { text: 'Selection by certification', included: true },
-        { text: '4 progressive levels', included: true },
-        { text: 'Leadership opportunities', included: true },
-        { text: 'Advanced training programs', included: true },
-        { text: 'Gurudev personal mentorship', included: true },
-        { text: 'Exclusive Diamond events', included: true },
-      ],
-      popular: false,
-      specialPrice: 'Certification required',
-    },
-    {
-      id: 'patron',
-      name: 'Patron',
-      regularPrice: null,
-      offerPrice: null,
-      emoji: '🌟',
-      color: '#8B5CF6',
-      gradient: ['#F5F3FF', '#EDE9FE'],
-      tagline: 'Generous Donors',
-      donationRange: '₹3L - ₹25L',
-      features: [
-        { text: 'All Diamond benefits', included: true },
-        { text: 'Donation: ₹3 Lakhs to ₹25 Lakhs', included: true },
-        { text: 'Special recognition', included: true },
-        { text: 'Annual patron gathering', included: true },
-        { text: 'Custom spiritual programs', included: true },
-        { text: 'Legacy documentation', included: true },
-        { text: 'Exclusive patron privileges', included: true },
-      ],
-      popular: false,
-      specialPrice: 'Donor tier',
-    },
-    {
-      id: 'elite',
-      name: 'Elite',
-      regularPrice: null,
-      offerPrice: null,
-      emoji: '⭐',
-      color: '#EC4899',
-      gradient: ['#FDF2F8', '#FCE7F3'],
-      tagline: 'Elite Donors',
-      donationRange: 'Above ₹25L',
-      features: [
-        { text: 'All Patron benefits', included: true },
-        { text: 'Donation: Above ₹25 Lakhs', included: true },
-        { text: 'Highest recognition status', included: true },
-        { text: 'Private events with Gurudev', included: true },
-        { text: 'Personalized spiritual journey', included: true },
-        { text: 'Elite council membership', included: true },
-        { text: 'Legacy impact programs', included: true },
-      ],
-      popular: false,
-      specialPrice: 'Elite donor tier',
-    },
-    {
-      id: 'quantum',
-      name: 'Quantum',
-      regularPrice: null,
-      offerPrice: null,
-      emoji: '🔮',
-      color: '#10B981',
-      gradient: ['#ECFDF5', '#D1FAE5'],
-      tagline: 'System Management',
-      features: [
-        { text: 'Policy & system management', included: true },
-        { text: 'Organizational leadership', included: true },
-        { text: 'Strategic planning involvement', included: true },
-        { text: 'All Elite benefits', included: true },
-        { text: 'Direct collaboration with leadership', included: true },
-        { text: 'System-level decision making', included: true },
-        { text: 'Lifetime honorary status', included: true },
-      ],
-      popular: false,
-      specialPrice: 'By invitation only',
-    },
+      courseAccess: ['All 5 Courses']
+    }
   ];
 
   const getDisplayPrice = (plan: typeof plans[0]) => {
-    if (plan.specialPrice) return plan.specialPrice;
-    if (plan.donationRange) return plan.donationRange;
     const price = pricingType === 'regular' ? plan.regularPrice : plan.offerPrice;
-    return price ? `₹${price.toLocaleString('en-IN')}` : 'Contact us';
+    return `₹${price.toLocaleString('en-IN')}`;
   };
 
   const getSavings = (plan: typeof plans[0]) => {
     if (!plan.regularPrice || !plan.offerPrice) return 0;
     return Math.round(((plan.regularPrice - plan.offerPrice) / plan.regularPrice) * 100);
+  };
+
+  const handlePurchase = async (plan: typeof plans[0]) => {
+    // Check if user already has this plan or higher
+    if (currentSubscription?.plan === plan.id && currentSubscription?.status === 'active') {
+      Alert.alert('Already Subscribed', `You already have the ${plan.name} plan!`);
+      return;
+    }
+
+    // Mock Razorpay payment for testing
+    Alert.alert(
+      'Confirm Purchase',
+      `Purchase ${plan.name} plan for ${getDisplayPrice(plan)}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Pay Now (Test)',
+          onPress: async () => {
+            // Mock payment ID (in production, this would come from Razorpay)
+            const mockPaymentId = `pay_test_${Date.now()}`;
+
+            const success = await purchaseMembership(plan.id, mockPaymentId);
+
+            if (success) {
+              Alert.alert(
+                'Success! 🎉',
+                `You've successfully purchased the ${plan.name} plan!\n\n` +
+                `✅ Enrolled in courses\n` +
+                `✅ Added to community groups\n` +
+                `✅ Full access activated`,
+                [
+                  {
+                    text: 'View Courses',
+                    onPress: () => router.push('/(home)/courses')
+                  },
+                  {
+                    text: 'OK',
+                    style: 'cancel'
+                  }
+                ]
+              );
+            } else {
+              Alert.alert('Error', error || 'Failed to complete purchase. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const isPlanActive = (planId: string) => {
+    return currentSubscription?.plan === planId && currentSubscription?.status === 'active';
   };
 
   return (
@@ -222,31 +158,39 @@ export default function MembershipScreen() {
             <Text className="text-[15px] text-gray-500 text-center leading-[22px] px-5">
               Choose your membership tier and unlock your spiritual potential
             </Text>
+
+            {/* Current Subscription Badge */}
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#3B82F6" style={{ marginTop: 12 }} />
+            ) : currentSubscription?.status === 'active' && (
+              <View className="mt-3 bg-green-100 px-4 py-2 rounded-full flex-row items-center gap-2">
+                <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+                <Text className="text-green-700 font-semibold text-sm">
+                  Active: {currentSubscription.plan.charAt(0).toUpperCase() + currentSubscription.plan.slice(1)} Plan
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* Pricing Toggle */}
           <View className="flex-row bg-white rounded-xl p-1 mb-5 shadow-sm">
             <TouchableOpacity
-              className={`flex-1 py-3 px-4 rounded-lg items-center ${
-                pricingType === 'offer' ? 'bg-green-500' : ''
-              }`}
+              className={`flex-1 py-3 px-4 rounded-lg items-center ${pricingType === 'offer' ? 'bg-green-500' : ''
+                }`}
               onPress={() => setPricingType('offer')}
             >
-              <Text className={`text-[15px] font-semibold ${
-                pricingType === 'offer' ? 'text-white' : 'text-gray-500'
-              }`}>
+              <Text className={`text-[15px] font-semibold ${pricingType === 'offer' ? 'text-white' : 'text-gray-500'
+                }`}>
                 Offer Price
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              className={`flex-1 py-3 px-4 rounded-lg items-center ${
-                pricingType === 'regular' ? 'bg-gray-800' : ''
-              }`}
+              className={`flex-1 py-3 px-4 rounded-lg items-center ${pricingType === 'regular' ? 'bg-gray-800' : ''
+                }`}
               onPress={() => setPricingType('regular')}
             >
-              <Text className={`text-[15px] font-semibold ${
-                pricingType === 'regular' ? 'text-white' : 'text-gray-500'
-              }`}>
+              <Text className={`text-[15px] font-semibold ${pricingType === 'regular' ? 'text-white' : 'text-gray-500'
+                }`}>
                 Regular Price
               </Text>
             </TouchableOpacity>
@@ -277,17 +221,16 @@ export default function MembershipScreen() {
                 key={plan.id}
                 activeOpacity={0.9}
                 onPress={() => setSelectedPlan(plan.id)}
-                className={`rounded-[20px] p-5 mb-4 shadow-lg relative ${
-                  isSelected ? 'border-[3px] scale-[1.02]' : ''
-                }`}
-                style={{ 
+                className={`rounded-[20px] p-5 mb-4 shadow-lg relative ${isSelected ? 'border-[3px] scale-[1.02]' : ''
+                  }`}
+                style={{
                   backgroundColor: plan.gradient[0],
                   borderColor: isSelected ? plan.color : undefined,
                 }}
               >
                 {/* Popular Badge */}
                 {plan.popular && (
-                  <View 
+                  <View
                     className="absolute top-4 right-4 flex-row items-center gap-1 px-2.5 py-1.5 rounded-[20px]"
                     style={{ backgroundColor: plan.color }}
                   >
@@ -306,7 +249,7 @@ export default function MembershipScreen() {
                     </View>
                   </View>
                   {isSelected && (
-                    <View 
+                    <View
                       className="w-8 h-8 rounded-full items-center justify-center"
                       style={{ backgroundColor: plan.color }}
                     >
@@ -329,15 +272,10 @@ export default function MembershipScreen() {
                   </View>
                   {plan.regularPrice && plan.offerPrice && (
                     <Text className="text-xs text-gray-500 mt-1">
-                      {pricingType === 'offer' 
+                      {pricingType === 'offer'
                         ? `Regular: ₹${plan.regularPrice.toLocaleString('en-IN')}`
                         : `Offer: ₹${plan.offerPrice.toLocaleString('en-IN')}`
                       }
-                    </Text>
-                  )}
-                  {plan.levels && (
-                    <Text className="text-xs text-purple-600 mt-1 font-semibold">
-                      Levels: {plan.levels.join(', ')}
                     </Text>
                   )}
                 </View>
@@ -346,19 +284,17 @@ export default function MembershipScreen() {
                 <View className="gap-2.5 mb-5">
                   {plan.features.map((feature, idx) => (
                     <View key={idx} className="flex-row items-center gap-2.5">
-                      <View 
+                      <View
                         className="w-5 h-5 rounded-full items-center justify-center"
                         style={{ backgroundColor: feature.included ? plan.color : '#E5E7EB' }}
                       >
-                        <Ionicons 
-                          name={feature.included ? "checkmark" : "close"} 
-                          size={12} 
-                          color="#FFFFFF" 
+                        <Ionicons
+                          name={feature.included ? "checkmark" : "close"}
+                          size={12}
+                          color="#FFFFFF"
                         />
                       </View>
-                      <Text className={`text-sm flex-1 ${
-                        !feature.included ? 'text-gray-400 line-through' : 'text-gray-700'
-                      }`}>
+                      <Text className={`text-sm flex-1 ${!feature.included ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
                         {feature.text}
                       </Text>
                     </View>
@@ -367,23 +303,30 @@ export default function MembershipScreen() {
 
                 {/* Action Button */}
                 <TouchableOpacity
-                  className={`flex-row items-center justify-center gap-2 py-4 rounded-xl ${
-                    isSelected ? '' : 'bg-white border-2'
-                  }`}
-                  style={isSelected ? { backgroundColor: plan.color } : { borderColor: plan.color }}
+                  className={`flex-row items-center justify-center gap-2 py-4 rounded-xl ${isPlanActive(plan.id) ? 'bg-green-500' : isSelected ? '' : 'bg-white border-2'
+                    }`}
+                  style={isPlanActive(plan.id) ? {} : isSelected ? { backgroundColor: plan.color } : { borderColor: plan.color }}
+                  onPress={() => isPlanActive(plan.id) ? null : handlePurchase(plan)}
+                  disabled={isPurchasing || isPlanActive(plan.id)}
                 >
-                  <Text 
-                    className="text-base font-bold"
-                    style={{ color: isSelected ? '#FFFFFF' : plan.color }}
-                  >
-                    {plan.specialPrice 
-                      ? 'Contact Us'
-                      : isSelected 
-                        ? 'Continue to Payment'
-                        : 'Select Plan'}
-                  </Text>
-                  {isSelected && !plan.specialPrice && (
-                    <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                  {isPurchasing && isSelected ? (
+                    <ActivityIndicator color={isSelected ? '#FFFFFF' : plan.color} />
+                  ) : (
+                    <>
+                      <Text
+                        className="text-base font-bold"
+                        style={{ color: isPlanActive(plan.id) ? '#FFFFFF' : isSelected ? '#FFFFFF' : plan.color }}
+                      >
+                        {isPlanActive(plan.id)
+                          ? '✓ Active Plan'
+                          : isSelected
+                            ? 'Purchase Now'
+                            : 'Select Plan'}
+                      </Text>
+                      {isSelected && !isPlanActive(plan.id) && (
+                        <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                      )}
+                    </>
                   )}
                 </TouchableOpacity>
               </TouchableOpacity>

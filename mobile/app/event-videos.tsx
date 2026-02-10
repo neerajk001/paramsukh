@@ -36,6 +36,7 @@ export default function EventVideosScreen() {
         courseColor: eventColor,
         videoTitle: video.title,
         videoDuration: video.duration,
+        videoUrl: video.url, // Pass the YouTube URL
       }
     });
   };

@@ -1,8 +1,10 @@
 import AdminJS from 'adminjs';
 import AdminJSExpress from '@adminjs/express';
 import * as AdminJSMongoose from '@adminjs/mongoose';
+// import uploadFeature from '@adminjs/upload';
+// import { CloudinaryProvider } from '../lib/cloudinaryProvider.js';
 import { User } from '../models/user.models.js';
-import { Course } from '../models/course.models.js';
+import { Course, Video } from '../models/course.models.js';
 import { Event } from '../models/event.models.js';
 import { Enrollment } from '../models/enrollment.models.js';
 import Product from '../models/product.models.js';
@@ -36,6 +38,12 @@ const authenticate = async (email, password) => {
 
 // AdminJS configuration
 export const setupAdmin = () => {
+  // Upload features disabled - using custom Cloudinary API routes instead
+  // const cloudinaryProvider = new CloudinaryProvider({
+  //   bucket: process.env.CLOUDINARY_CLOUD_NAME,
+  //   opts: {}
+  // });
+
   const adminOptions = {
     resources: [
       {
@@ -61,11 +69,52 @@ export const setupAdmin = () => {
         options: {
           navigation: { name: 'Courses', icon: 'Book' },
           properties: {
+            // Hide complex arrays in list, show in edit
             videos: { isVisible: { list: false, edit: true, show: true } },
             pdfs: { isVisible: { list: false, edit: true, show: true } },
-            liveSessions: { isVisible: { list: false, edit: true, show: true } }
+            liveSessions: { isVisible: { list: false, edit: true, show: true } },
+            // Hide raw URL fields in edit, show upload instead? 
+            // Better to show both or let adminjs handle view
+            thumbnailUrl: { isVisible: { list: false, edit: true, show: true } },
+            bannerUrl: { isVisible: { list: false, edit: true, show: true } }
           }
         },
+        // Upload features disabled - using custom Cloudinary API routes instead
+        // features: [
+        //   uploadFeature({
+        //     provider: cloudinaryProvider,
+        //     properties: { key: 'thumbnailUrl', file: 'uploadThumbnail' },
+        //     validation: { mimeTypes: ['image/png', 'image/jpg', 'image/jpeg', 'image/webp'] }
+        //   }),
+        //   uploadFeature({
+        //     provider: cloudinaryProvider,
+        //     properties: { key: 'bannerUrl', file: 'uploadBanner' },
+        //     validation: { mimeTypes: ['image/png', 'image/jpg', 'image/jpeg', 'image/webp'] }
+        //   })
+        // ]
+      },
+      {
+        resource: Video,
+        options: {
+          navigation: { name: 'Courses', icon: 'Monitor' },
+          properties: {
+            videoUrl: { isVisible: { list: true, edit: false, show: true } }, // URL is read-only in edit, set by upload
+            thumbnailUrl: { isVisible: { list: false, edit: false, show: true } }
+          }
+        },
+        // Upload features disabled - using custom Cloudinary API routes instead
+        // features: [
+        //   uploadFeature({
+        //     provider: cloudinaryProvider,
+        //     properties: { key: 'videoUrl', file: 'uploadVideo' },
+        //     validation: { mimeTypes: ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm'] }
+        //   }),
+        //   uploadFeature({
+        //     provider: cloudinaryProvider,
+        //     properties: { key: 'thumbnailUrl', file: 'uploadThumbnail' },
+        //     validation: { mimeTypes: ['image/png', 'image/jpg', 'image/jpeg', 'image/webp'] }
+        //   })
+        // ]
       },
       {
         resource: Enrollment,
@@ -79,7 +128,10 @@ export const setupAdmin = () => {
           navigation: { name: 'Events', icon: 'Calendar' },
           properties: {
             images: { isVisible: { list: false, edit: true, show: true } },
-            videos: { isVisible: { list: false, edit: true, show: true } }
+            youtubeVideos: { isVisible: { list: false, edit: true, show: true } },
+            reminderSent: { isVisible: false },
+            reminderSentAt: { isVisible: false },
+            currentAttendees: { isVisible: { list: true, edit: false, show: true } }
           }
         },
       },

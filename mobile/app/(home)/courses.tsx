@@ -4,69 +4,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Header from '../../components/Header';
 
-interface Course {
-  id: number;
-  title: string;
-  icon: string;
-  color: string;
-  description: string;
-  duration: string;
-  videos: number;
-}
-  
-export default function CoursesScreen() {   
-  const router = useRouter();
-             
-  const basicCourses: Course[] = [        
-    {   
-      id: 1,  
-      title: 'Physical Wellness',   
-      icon: 'fitness',
-      color: '#10B981',
-      description: 'Pain free, Disease free, Medicine free Body. Achieve optimal physical health through holistic practices, nutrition, and lifestyle changes.',
-      duration: '6 weeks',
-      videos: 4,
-    },
-    {
-      id: 2,
-      title: 'Mental Wellness',
-      icon: 'bulb',
-      color: '#F59E0B',
-      description: 'Intellectual & Emotional Wellness. Develop mental clarity, emotional balance, cognitive skills, and psychological resilience.',
-      duration: '8 weeks',
-      videos: 16,
-    },
-    {
-      id: 3,
-      title: 'Financial Wellness',
-      icon: 'cash',
-      color: '#3B82F6',
-      description: 'Master personal finance, investment strategies, wealth building, and financial independence for long-term prosperity.',
-      duration: '8 weeks',
-      videos: 16,
-    },
-    {
-      id: 4,
-      title: 'Relationship & Family Wellness',
-      icon: 'heart',       
-      color: '#EC4899',
-      description: 'Build stronger relationships, improve communication, develop emotional intelligence, and create harmonious family dynamics.',
-      duration: '10 weeks',
-      videos: 20,   
-    },     
-    {                 
-      id: 5,
-      title: 'Spirituality & Mantra Yoga',       
-      icon: 'flower',  
-      color: '#8B5CF6',   
-      description: 'Explore spiritual practices, meditation techniques, mantra chanting, and yoga to achieve inner peace and enlightenment.',
-      duration: '12 weeks',
-      videos: 24,    
-    },
-  ];
 
-  const currentCourses = basicCourses;
-    
+
+import { useCourseStore } from '../../store/courseStore';
+import { useEffect } from 'react';
+import { ActivityIndicator } from 'react-native';
+
+export default function CoursesScreen() {
+  const router = useRouter();
+  const { courses, fetchCourses, isLoading } = useCourseStore();
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
   return (
     <View style={styles.container}>
       <Header />
@@ -82,51 +33,55 @@ export default function CoursesScreen() {
             </Text>
           </View>
 
-        {currentCourses.map((module) => (
-          <View
-            key={module.id}
-            style={[styles.card, { borderLeftColor: module.color }]}
-          >
-            <View style={styles.cardContent}>
-              <View style={styles.headerRow}>
-                <Ionicons name={module.icon as any} size={24} color={module.color} />
-                <Text style={styles.title}>{module.title}</Text>
-              </View>
-              
-              <Text style={styles.description} numberOfLines={2}>
-                {module.description}
-              </Text>
-              
-              <View style={styles.footerRow}>
-                <View style={styles.metaRow}>
-                  <Text style={styles.metaText}>{module.duration}</Text>
-                  <Text style={styles.metaDot}>•</Text>
-                  <Text style={styles.metaText}>{module.videos} videos</Text>
+          {isLoading ? (
+            <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 20 }} />
+          ) : (
+            courses.map((module) => (
+              <View
+                key={module._id}
+                style={[styles.card, { borderLeftColor: module.color }]}
+              >
+                <View style={styles.cardContent}>
+                  <View style={styles.headerRow}>
+                    <Ionicons name={module.icon as any} size={24} color={module.color} />
+                    <Text style={styles.title}>{module.title}</Text>
+                  </View>
+
+                  <Text style={styles.description} numberOfLines={2}>
+                    {module.description}
+                  </Text>
+
+                  <View style={styles.footerRow}>
+                    <View style={styles.metaRow}>
+                      <Text style={styles.metaText}>{module.duration}</Text>
+                      <Text style={styles.metaDot}>•</Text>
+                      <Text style={styles.metaText}>{module.totalVideos || 0} videos</Text>
+                    </View>
+
+                    <TouchableOpacity
+                      style={[styles.viewButton, { backgroundColor: module.color }]}
+                      onPress={() => router.push({
+                        pathname: '/course-detail',
+                        params: {
+                          id: module._id,
+                          title: module.title,
+                          color: module.color,
+                          duration: module.duration,
+                          videos: module.totalVideos || 0,
+                        }
+                      })}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.viewButtonText}>View</Text>
+                      <Ionicons name="chevron-forward" size={16} color="#FFFFFF" />
+                    </TouchableOpacity>
+                  </View>
                 </View>
-                
-                <TouchableOpacity
-                  style={[styles.viewButton, { backgroundColor: module.color }]}
-                  onPress={() => router.push({
-                    pathname: '/course-detail',
-                    params: {
-                      id: module.id,
-                      title: module.title,
-                      color: module.color,
-                      duration: module.duration,
-                      videos: module.videos,
-                    }
-                  })}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.viewButtonText}>View</Text>
-                  <Ionicons name="chevron-forward" size={16} color="#FFFFFF" />
-                </TouchableOpacity>
               </View>
-            </View>
-          </View>
-        ))}
-      </View>
-      </ScrollView>       
+            ))
+          )}
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -216,4 +171,3 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 });
-         
