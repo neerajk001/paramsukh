@@ -6,7 +6,7 @@ const storage = multer.memoryStorage();
 // File filter for images
 const imageFilter = (req, file, cb) => {
   const allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-  
+
   if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {
@@ -17,7 +17,7 @@ const imageFilter = (req, file, cb) => {
 // File filter for videos
 const videoFilter = (req, file, cb) => {
   const allowedMimes = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/webm'];
-  
+
   if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {
@@ -31,7 +31,7 @@ const mediaFilter = (req, file, cb) => {
     'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
     'video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/webm'
   ];
-  
+
   if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {
@@ -58,12 +58,12 @@ export const uploadMultipleImages = multer({
   }
 }).array('images', 10);
 
-// Single video upload (max 100MB)
+// Single video upload (max 1GB)
 export const uploadSingleVideo = multer({
   storage: storage,
   fileFilter: videoFilter,
   limits: {
-    fileSize: 100 * 1024 * 1024 // 100MB
+    fileSize: 1024 * 1024 * 1024 // 1GB
   }
 }).single('video');
 
@@ -81,7 +81,7 @@ export const uploadMixedMedia = multer({
   storage: storage,
   fileFilter: mediaFilter,
   limits: {
-    fileSize: 100 * 1024 * 1024, // 100MB
+    fileSize: 1024 * 1024 * 1024, // 1GB
     files: 10
   }
 }).array('media', 10);
@@ -108,7 +108,7 @@ export const handleMulterError = (err, req, res, next) => {
         message: 'Unexpected field in form data.'
       });
     }
-    
+
     return res.status(400).json({
       success: false,
       message: err.message
@@ -120,7 +120,7 @@ export const handleMulterError = (err, req, res, next) => {
       message: err.message
     });
   }
-  
+
   next();
 };
 

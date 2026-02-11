@@ -32,6 +32,8 @@ export default function VideosTab({ courseId, videos, onUpdate }: VideosTabProps
         description: '',
     });
     const [submitting, setSubmitting] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
     const [deleting, setDeleting] = useState<string | null>(null);
 
     const sortedVideos = [...videos].sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -62,6 +64,7 @@ export default function VideosTab({ courseId, videos, onUpdate }: VideosTabProps
     const closeModal = () => {
         setIsModalOpen(false);
         setEditingVideo(null);
+        setUploadProgress(0);
         setFormData({
             title: '',
             url: '',
@@ -69,6 +72,61 @@ export default function VideosTab({ courseId, videos, onUpdate }: VideosTabProps
             thumbnailUrl: '',
             description: '',
         });
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'video' | 'image') => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Create form data
+        const formData = new FormData();
+        formData.append('file', file); // API expects 'file'
+
+
+        setUploading(true);
+        setUploadProgress(0);
+
+        try {
+            // Determine endpoint
+            const endpoint = type === 'video' ? '/api/upload/video' : '/api/upload/image';
+
+            // Track upload progress
+            const response = await apiClient.post(endpoint, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+                onUploadProgress: (progressEvent) => {
+                    if (progressEvent.total) {
+                        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                        setUploadProgress(percentCompleted);
+                    }
+                }
+            });
+
+            if (response.data.success) {
+                if (type === 'video') {
+                    setFormData(prev => ({
+                        ...prev,
+                        url: response.data.data.url,
+                        duration: response.data.data.duration ? Math.round(response.data.data.duration / 60) : prev.duration // Convert seconds to minutes
+                    }));
+                } else {
+                    setFormData(prev => ({
+                        ...prev,
+                        thumbnailUrl: response.data.data.url
+                    }));
+                }
+                toast.success(`${type} uploaded successfully!`);
+            }
+        } catch (error: any) {
+            console.error('Upload error:', error);
+            toast.error(error.response?.data?.message || 'Upload failed');
+        } finally {
+            setUploading(false);
+            setUploadProgress(0);
+            // Reset input value to allow re-uploading same file if needed
+            e.target.value = '';
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -242,16 +300,54 @@ export default function VideosTab({ courseId, videos, onUpdate }: VideosTabProps
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Video URL *
+                                        Video
                                     </label>
-                                    <input
-                                        type="url"
-                                        required
-                                        value={formData.url}
-                                        onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="https://vimeo.com/..."
-                                    />
+                                    <div className="flex gap-2">
+                                        <div className="flex-1">
+                                            <input
+                                                type="url"
+                                                required
+                                                value={formData.url}
+                                                onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                placeholder="https://vimeo.com/..."
+                                            />
+                                        </div>
+                                        <div className="relative">
+                                            <input
+                                                type="file"
+                                                accept="video/*"
+                                                onChange={(e) => handleFileUpload(e, 'video')}
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                disabled={uploading}
+                                            />
+                                            <button
+                                                type="button"
+                                                disabled={uploading}
+                                                className={`px-4 py-2 rounded-lg border text-sm font-medium transition whitespace-nowrap flex items-center gap-2 ${uploading
+                                                    ? 'bg-blue-50 text-blue-600 border-blue-200'
+                                                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300'
+                                                    }`}
+                                            >
+                                                {uploading ? (
+                                                    <div className="w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin" />
+                                                ) : (
+                                                    <Plus className="w-4 h-4" />
+                                                )}
+                                                {uploading && <span>{uploadProgress}%</span>}
+                                                {!uploading && <span>Upload Video</span>}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {uploading && (
+                                        <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2 overflow-hidden">
+                                            <div
+                                                className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+                                                style={{ width: `${uploadProgress}%` }}
+                                            />
+                                        </div>
+                                    )}
+                                    <p className="text-xs text-gray-500 mt-1">Upload mp4, mov, avi (max 1GB)</p>
                                 </div>
 
                                 <div>
@@ -261,25 +357,70 @@ export default function VideosTab({ courseId, videos, onUpdate }: VideosTabProps
                                     <input
                                         type="number"
                                         required
-                                        min="1"
+                                        min="0"
+                                        step="0.1"
                                         value={formData.duration}
-                                        onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) || 0 })}
+                                        onChange={(e) => setFormData({ ...formData, duration: parseFloat(e.target.value) || 0 })}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         placeholder="30"
                                     />
+                                    <p className="text-xs text-gray-500 mt-1">Auto-calculated on video upload</p>
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Thumbnail URL
+                                        Thumbnail
                                     </label>
-                                    <input
-                                        type="url"
-                                        value={formData.thumbnailUrl}
-                                        onChange={(e) => setFormData({ ...formData, thumbnailUrl: e.target.value })}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="https://..."
-                                    />
+
+                                    {formData.thumbnailUrl && (
+                                        <div className="mb-2 relative w-full h-32 bg-gray-100 rounded overflow-hidden">
+                                            <img
+                                                src={formData.thumbnailUrl}
+                                                alt="Thumbnail preview"
+                                                className="w-full h-full object-cover"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, thumbnailUrl: '' })}
+                                                className="absolute top-2 right-2 p-1 bg-white/80 rounded-full hover:bg-white text-red-500"
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    <div className="flex gap-2">
+                                        <div className="flex-1">
+                                            <input
+                                                type="url"
+                                                value={formData.thumbnailUrl}
+                                                onChange={(e) => setFormData({ ...formData, thumbnailUrl: e.target.value })}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                placeholder="https://example.com/image.jpg"
+                                            />
+                                        </div>
+                                        <div className="relative">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => handleFileUpload(e, 'image')}
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                disabled={uploading}
+                                            />
+                                            <button
+                                                type="button"
+                                                disabled={uploading}
+                                                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg border border-gray-300 text-sm font-medium transition whitespace-nowrap flex items-center gap-2"
+                                            >
+                                                {uploading ? (
+                                                    <div className="w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin" />
+                                                ) : (
+                                                    <Plus className="w-4 h-4" />
+                                                )}
+                                                Upload Image
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div>

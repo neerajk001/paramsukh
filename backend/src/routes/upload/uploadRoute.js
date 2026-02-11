@@ -22,6 +22,18 @@ import {
 
 const router = express.Router();
 
+// Helper middleware to allow either Admin API Key or User Token
+const adminOrUserAuth = async (req, res, next) => {
+  const apiKey = req.headers['x-admin-api-key'];
+  const adminApiKey = process.env.ADMIN_API_KEY || 'dev-admin-key-123';
+
+  if (apiKey && apiKey === adminApiKey) {
+    return next();
+  }
+
+  return protectedRoutes(req, res, next);
+};
+
 // ========================================
 // Upload Status (Public)
 // ========================================
@@ -31,7 +43,7 @@ const router = express.Router();
 router.get('/status', getUploadStatus);
 
 // ========================================
-// Image Upload Routes (Protected)
+// Image Upload Routes (Protected or Admin)
 // ========================================
 
 // Upload single image (general purpose)
@@ -39,7 +51,7 @@ router.get('/status', getUploadStatus);
 // @multipart file: image
 // @query folder: optional folder name
 router.post('/image',
-  protectedRoutes,
+  adminOrUserAuth,
   uploadSingleImageMiddleware,
   handleMulterError,
   uploadSingleImage
@@ -50,7 +62,7 @@ router.post('/image',
 // @multipart files: images[]
 // @query folder: optional folder name
 router.post('/images',
-  protectedRoutes,
+  adminOrUserAuth,
   uploadMultipleImagesMiddleware,
   handleMulterError,
   uploadImages
@@ -70,7 +82,7 @@ router.post('/profile-photo',
 // POST /api/upload/product-images
 // @multipart files: images[]
 router.post('/product-images',
-  protectedRoutes,
+  adminOrUserAuth,
   uploadMultipleImagesMiddleware,
   handleMulterError,
   uploadProductImages
@@ -88,7 +100,7 @@ router.post('/course-media',
 );
 
 // ========================================
-// Video Upload Routes (Protected)
+// Video Upload Routes (Protected or Admin)
 // ========================================
 
 // Upload video
@@ -96,14 +108,14 @@ router.post('/course-media',
 // @multipart file: video
 // @query folder: optional folder name
 router.post('/video',
-  protectedRoutes,
+  adminOrUserAuth,
   uploadSingleVideo,
   handleMulterError,
   uploadVideoFile
 );
 
 // ========================================
-// Delete Routes (Protected)
+// Delete Routes (Protected or Admin)
 // ========================================
 
 // Delete uploaded file
@@ -111,7 +123,7 @@ router.post('/video',
 // @body publicId: Cloudinary public ID
 // @body resourceType: image or video
 router.delete('/delete',
-  protectedRoutes,
+  adminOrUserAuth,
   deleteUploadedFile
 );
 
