@@ -13,7 +13,8 @@ interface Course {
     icon: string;
     thumbnailUrl: string;
     bannerUrl: string;
-    duration: number;
+    duration: number; // Changed to string in UI but interface kept as number? Handled below
+    category: string; // Added category
     tags: string[];
     status: string;
 }
@@ -26,14 +27,15 @@ interface CourseModalProps {
 }
 
 export default function CourseModal({ isOpen, onClose, course, onSuccess }: CourseModalProps) {
-    const [formData, setFormData] = useState<Course>({
+    const [formData, setFormData] = useState<any>({ // Temporarily any to avoid strict type mismatch during refactor if needed, or update interface properly
         title: '',
         description: '',
         color: '#000000',
         icon: '',
         thumbnailUrl: '',
         bannerUrl: '',
-        duration: 0,
+        duration: '', // Changed to string for input
+        category: '', // Added category
         tags: [],
         status: 'draft',
     });
@@ -42,7 +44,10 @@ export default function CourseModal({ isOpen, onClose, course, onSuccess }: Cour
 
     useEffect(() => {
         if (course) {
-            setFormData(course);
+            setFormData({
+                ...course,
+                category: (course as any).category || ''
+            });
             setTagsInput(course.tags ? course.tags.join(', ') : '');
         } else {
             setFormData({
@@ -52,7 +57,8 @@ export default function CourseModal({ isOpen, onClose, course, onSuccess }: Cour
                 icon: '',
                 thumbnailUrl: '',
                 bannerUrl: '',
-                duration: 0,
+                duration: '',
+                category: '',
                 tags: [],
                 status: 'draft',
             });
@@ -93,10 +99,42 @@ export default function CourseModal({ isOpen, onClose, course, onSuccess }: Cour
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
+        setFormData((prev: Course) => ({
             ...prev,
-            [name]: name === 'duration' ? Number(value) : value
+            [name]: value
         }));
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, fieldName: 'thumbnailUrl' | 'bannerUrl', type: 'thumbnail' | 'banner') => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Create form data
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const toastId = toast.loading('Uploading image...');
+
+        try {
+            // Explicitly unsetting Content-Type (or setting to undefined which axios handles)
+            // allows the browser to set the correct multipart/form-data header with boundary.
+            const response = await apiClient.post(`/api/upload/course-media?type=${type}`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                }
+            });
+
+            if (response.data.success) {
+                setFormData((prev: Course) => ({
+                    ...prev,
+                    [fieldName]: response.data.data.url
+                }));
+                toast.success('Image uploaded successfully!', { id: toastId });
+            }
+        } catch (error: any) {
+            console.error('Upload error:', error);
+            toast.error(error.response?.data?.message || 'Upload failed', { id: toastId });
+        }
     };
 
     if (!isOpen) return null;
@@ -200,20 +238,43 @@ export default function CourseModal({ isOpen, onClose, course, onSuccess }: Cour
                         {/* Duration */}
                         <div>
                             <label className="block text-sm font-medium text-secondary mb-2">
-                                Duration (hours) *
+                                Duration (weeks) *
                             </label>
                             <input
-                                type="number"
+                                type="text"
                                 name="duration"
                                 value={formData.duration}
                                 onChange={handleChange}
-                                min="0"
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                                placeholder="10"
+                                placeholder="e.g. 6 weeks"
                                 required
                             />
                         </div>
 
+                        {/* Category */}
+                        <div>
+                            <label className="block text-sm font-medium text-secondary mb-2">
+                                Category *
+                            </label>
+                            <select
+                                name="category"
+                                value={formData.category}
+                                onChange={handleChange}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none capitalize"
+                                required
+                            >
+                                <option value="">Select Category</option>
+                                <option value="physical">Physical</option>
+                                <option value="mental">Mental</option>
+                                <option value="financial">Financial</option>
+                                <option value="relationship">Relationship</option>
+                                <option value="spiritual">Spiritual</option>
+                                <option value="general">General</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Status */}
                         <div>
                             <label className="block text-sm font-medium text-secondary mb-2">
@@ -251,33 +312,119 @@ export default function CourseModal({ isOpen, onClose, course, onSuccess }: Cour
                     {/* Thumbnail URL */}
                     <div>
                         <label className="block text-sm font-medium text-secondary mb-2">
-                            Thumbnail URL *
+                            Thumbnail *
                         </label>
-                        <input
-                            type="url"
-                            name="thumbnailUrl"
-                            value={formData.thumbnailUrl}
-                            onChange={handleChange}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                            placeholder="https://example.com/image.jpg"
-                            required
-                        />
+                        <div className="space-y-3">
+                            {/* Preview */}
+                            {formData.thumbnailUrl && (
+                                <div className="relative w-full h-40 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                                    <img
+                                        src={formData.thumbnailUrl}
+                                        alt="Thumbnail Preview"
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x200?text=Invalid+Image';
+                                        }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData((prev: Course) => ({ ...prev, thumbnailUrl: '' }))}
+                                        className="absolute top-2 right-2 p-1 bg-white/80 rounded-full hover:bg-white text-red-500"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Upload & Url Input */}
+                            <div className="flex gap-3 items-center">
+                                <div className="flex-1">
+                                    <input
+                                        type="url"
+                                        name="thumbnailUrl"
+                                        value={formData.thumbnailUrl}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm"
+                                        placeholder="https://example.com/image.jpg"
+                                        required
+                                    />
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => handleFileUpload(e, 'thumbnailUrl', 'thumbnail')}
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                        disabled={loading}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-secondary rounded-lg border border-gray-300 text-sm font-medium transition whitespace-nowrap"
+                                    >
+                                        Upload Image
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Banner URL */}
                     <div>
                         <label className="block text-sm font-medium text-secondary mb-2">
-                            Banner URL *
+                            Banner *
                         </label>
-                        <input
-                            type="url"
-                            name="bannerUrl"
-                            value={formData.bannerUrl}
-                            onChange={handleChange}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                            placeholder="https://example.com/banner.jpg"
-                            required
-                        />
+                        <div className="space-y-3">
+                            {/* Preview */}
+                            {formData.bannerUrl && (
+                                <div className="relative w-full h-32 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                                    <img
+                                        src={formData.bannerUrl}
+                                        alt="Banner Preview"
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/600x200?text=Invalid+Image';
+                                        }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData((prev: Course) => ({ ...prev, bannerUrl: '' }))}
+                                        className="absolute top-2 right-2 p-1 bg-white/80 rounded-full hover:bg-white text-red-500"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Upload & Url Input */}
+                            <div className="flex gap-3 items-center">
+                                <div className="flex-1">
+                                    <input
+                                        type="url"
+                                        name="bannerUrl"
+                                        value={formData.bannerUrl}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm"
+                                        placeholder="https://example.com/banner.jpg"
+                                        required
+                                    />
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => handleFileUpload(e, 'bannerUrl', 'banner')}
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                        disabled={loading}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-secondary rounded-lg border border-gray-300 text-sm font-medium transition whitespace-nowrap"
+                                    >
+                                        Upload Image
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Actions */}
