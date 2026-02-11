@@ -46,6 +46,22 @@ const eventRegistrationSchema = new mongoose.Schema({
   },
   
   // Additional registration data
+  participantName: {
+    type: String,
+    trim: true,
+    default: null
+  },
+  participantEmail: {
+    type: String,
+    trim: true,
+    lowercase: true,
+    default: null
+  },
+  participantPhone: {
+    type: String,
+    trim: true,
+    default: null
+  },
   notes: {
     type: String,
     trim: true

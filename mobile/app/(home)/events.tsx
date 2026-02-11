@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform, Image, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Header from '../../components/Header';
@@ -26,6 +26,16 @@ export default function EventsScreen() {
     } catch (e) {
       return dateString;
     }
+  };
+
+  const openRegisterForm = (eventId: string) => {
+    router.push({
+      pathname: '/event-detail',
+      params: {
+        eventId,
+        openRegister: '1'
+      }
+    });
   };
 
   return (
@@ -99,7 +109,14 @@ export default function EventsScreen() {
                     });
                   }
                 }
-                // For upcoming events, you could navigate to event details
+                if (activeTab === 'upcoming') {
+                  router.push({
+                    pathname: '/event-detail',
+                    params: {
+                      eventId: event._id
+                    }
+                  });
+                }
               };
 
               return (
@@ -157,11 +174,24 @@ export default function EventsScreen() {
                         <TouchableOpacity
                           className="flex-row items-center gap-1.5 py-2 px-3.5 rounded-lg"
                           style={{ backgroundColor: event.color }}
+                          disabled={event.isRegistered}
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            if (!event.isRegistered) {
+                              openRegisterForm(event._id);
+                            }
+                          }}
                         >
                           <Text className="text-white text-[13px] font-semibold">
-                            {event.isPaid ? `₹${event.price}` : 'Free'}
+                            {event.isRegistered
+                              ? 'Registered'
+                              : event.isPaid
+                                ? 'Rs. ' + event.price + ' - Register'
+                                : 'Register'}
                           </Text>
-                          <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
+                          {!event.isRegistered && (
+                            <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
+                          )}
                         </TouchableOpacity>
                       </View>
                     </View>

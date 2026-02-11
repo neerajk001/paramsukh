@@ -10,7 +10,7 @@ export const registerForEvent = async (req, res) => {
   try {
     const { eventId } = req.params;
     const userId = req.user._id; // From auth middleware
-    const { notes } = req.body;
+    const { notes, name, email, phone, simulatePayment, paymentId } = req.body;
 
     // Check if event exists
     const event = await Event.findById(eventId);
@@ -50,14 +50,34 @@ export const registerForEvent = async (req, res) => {
     // Get current price
     const currentPrice = event.getCurrentPrice();
 
+    const participantName = name || req.user.displayName || '';
+    const participantEmail = email || req.user.email || '';
+    const participantPhone = phone || req.user.phone || '';
+
+    const allowSimulatedPayment = process.env.NODE_ENV !== 'production';
+    const isSimulatedPayment = Boolean(simulatePayment) && allowSimulatedPayment && currentPrice > 0;
+    const finalPaymentStatus = currentPrice > 0
+      ? (isSimulatedPayment ? 'completed' : 'pending')
+      : 'completed';
+    const finalStatus = currentPrice > 0
+      ? (isSimulatedPayment ? 'confirmed' : 'pending')
+      : 'confirmed';
+    const finalPaymentId = isSimulatedPayment ? (paymentId || `sim_${Date.now()}`) : null;
+    const paidAt = isSimulatedPayment ? new Date() : null;
+
     // Create registration
     const registration = await EventRegistration.create({
       userId,
       eventId,
+      participantName,
+      participantEmail,
+      participantPhone,
       notes,
       paymentAmount: currentPrice,
-      paymentStatus: currentPrice > 0 ? 'pending' : 'completed',
-      status: currentPrice > 0 ? 'pending' : 'confirmed'
+      paymentStatus: finalPaymentStatus,
+      paymentId: finalPaymentId,
+      paidAt,
+      status: finalStatus
     });
 
     // Update event attendee count
@@ -67,11 +87,14 @@ export const registerForEvent = async (req, res) => {
 
     console.log(`✅ User ${userId} registered for event: ${event.title}`);
 
+    const paymentRequired = currentPrice > 0 && !isSimulatedPayment;
+    const responseMessage = paymentRequired
+      ? "Registration created. Please complete payment."
+      : "Successfully registered for event";
+
     return res.status(201).json({
       success: true,
-      message: currentPrice > 0 
-        ? "Registration created. Please complete payment." 
-        : "Successfully registered for event",
+      message: responseMessage,
       registration,
       event: {
         _id: event._id,
@@ -80,7 +103,7 @@ export const registerForEvent = async (req, res) => {
         eventTime: event.eventTime,
         location: event.location
       },
-      paymentRequired: currentPrice > 0,
+      paymentRequired,
       paymentAmount: currentPrice
     });
 

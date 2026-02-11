@@ -7,17 +7,21 @@ import { Search, Users, CheckCircle, XCircle, Clock, Download, Mail, Phone } fro
 
 interface Registration {
     _id: string;
-    userId: {
+    participantName?: string;
+    participantEmail?: string;
+    participantPhone?: string;
+    userId?: {
         _id: string;
-        name: string;
-        email: string;
-        phoneNumber?: string;
+        displayName?: string;
+        email?: string;
+        phone?: string;
     };
-    status: 'confirmed' | 'pending' | 'cancelled' | 'waitlist';
-    attended: boolean;
-    paymentStatus?: 'paid' | 'pending' | 'failed';
+    status: 'confirmed' | 'pending' | 'cancelled' | 'attended' | 'no-show';
+    checkedIn?: boolean;
+    checkedInAt?: string;
+    paymentStatus?: 'completed' | 'pending' | 'failed' | 'refunded';
+    paymentAmount?: number;
     registeredAt: string;
-    checkInTime?: string;
 }
 
 interface RegistrationsTabProps {
@@ -60,14 +64,14 @@ export default function RegistrationsTab({ eventId }: RegistrationsTabProps) {
     const exportToCSV = () => {
         const headers = ['Name', 'Email', 'Phone', 'Status', 'Payment Status', 'Attended', 'Registered At', 'Check-in Time'];
         const rows = filteredRegistrations.map(reg => [
-            reg.userId.name,
-            reg.userId.email,
-            reg.userId.phoneNumber || 'N/A',
+            reg.participantName || reg.userId?.displayName || 'N/A',
+            reg.participantEmail || reg.userId?.email || 'N/A',
+            reg.participantPhone || reg.userId?.phone || 'N/A',
             reg.status,
             reg.paymentStatus || 'N/A',
-            reg.attended ? 'Yes' : 'No',
+            reg.checkedIn || reg.status === 'attended' ? 'Yes' : 'No',
             new Date(reg.registeredAt).toLocaleString(),
-            reg.checkInTime ? new Date(reg.checkInTime).toLocaleString() : 'N/A'
+            reg.checkedInAt ? new Date(reg.checkedInAt).toLocaleString() : 'N/A'
         ]);
 
         const csvContent = [
@@ -89,24 +93,28 @@ export default function RegistrationsTab({ eventId }: RegistrationsTabProps) {
             case 'confirmed': return 'bg-green-100 text-green-800';
             case 'pending': return 'bg-yellow-100 text-yellow-800';
             case 'cancelled': return 'bg-red-100 text-red-800';
-            case 'waitlist': return 'bg-blue-100 text-blue-800';
+            case 'attended': return 'bg-blue-100 text-blue-800';
+            case 'no-show': return 'bg-gray-100 text-gray-800';
             default: return 'bg-gray-100 text-gray-800';
         }
     };
 
     const getPaymentStatusColor = (status?: string) => {
         switch (status) {
-            case 'paid': return 'bg-green-100 text-green-800';
+            case 'completed': return 'bg-green-100 text-green-800';
             case 'pending': return 'bg-yellow-100 text-yellow-800';
             case 'failed': return 'bg-red-100 text-red-800';
+            case 'refunded': return 'bg-gray-100 text-gray-800';
             default: return 'bg-gray-100 text-gray-800';
         }
     };
 
     const filteredRegistrations = registrations.filter(reg => {
         const matchesSearch = 
-            reg.userId.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            reg.userId.email?.toLowerCase().includes(searchTerm.toLowerCase());
+            reg.participantName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            reg.participantEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            reg.userId?.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            reg.userId?.email?.toLowerCase().includes(searchTerm.toLowerCase());
         
         const matchesStatus = filterStatus === 'all' || reg.status === filterStatus;
 
@@ -116,7 +124,7 @@ export default function RegistrationsTab({ eventId }: RegistrationsTabProps) {
     const stats = {
         total: registrations.length,
         confirmed: registrations.filter(r => r.status === 'confirmed').length,
-        attended: registrations.filter(r => r.attended).length,
+        attended: registrations.filter(r => r.checkedIn || r.status === 'attended').length,
         pending: registrations.filter(r => r.status === 'pending').length
     };
 
@@ -216,7 +224,8 @@ export default function RegistrationsTab({ eventId }: RegistrationsTabProps) {
                             <option value="confirmed">Confirmed</option>
                             <option value="pending">Pending</option>
                             <option value="cancelled">Cancelled</option>
-                            <option value="waitlist">Waitlist</option>
+                            <option value="attended">Attended</option>
+                            <option value="no-show">No-Show</option>
                         </select>
                     </div>
                 </div>
@@ -261,14 +270,14 @@ export default function RegistrationsTab({ eventId }: RegistrationsTabProps) {
                                             <div className="flex items-center">
                                                 <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
                                                     <span className="text-blue-600 font-semibold">
-                                                        {registration.userId.name?.charAt(0).toUpperCase()}
+                                                        {(registration.participantName || registration.userId?.displayName || 'U')?.charAt(0).toUpperCase()}
                                                     </span>
                                                 </div>
                                                 <div className="ml-4">
                                                     <div className="text-sm font-medium text-gray-900">
-                                                        {registration.userId.name}
+                                                        {registration.participantName || registration.userId?.displayName || 'Unknown'}
                                                     </div>
-                                                    {registration.attended && (
+                                                    {(registration.checkedIn || registration.status === 'attended') && (
                                                         <div className="text-xs text-green-600 flex items-center gap-1">
                                                             <CheckCircle className="w-3 h-3" />
                                                             Checked In
@@ -280,12 +289,12 @@ export default function RegistrationsTab({ eventId }: RegistrationsTabProps) {
                                         <td className="px-6 py-4">
                                             <div className="text-sm text-gray-900 flex items-center gap-2">
                                                 <Mail className="w-4 h-4 text-gray-400" />
-                                                {registration.userId.email}
+                                                {registration.participantEmail || registration.userId?.email || 'N/A'}
                                             </div>
-                                            {registration.userId.phoneNumber && (
+                                            {(registration.participantPhone || registration.userId?.phone) && (
                                                 <div className="text-sm text-gray-500 flex items-center gap-2 mt-1">
                                                     <Phone className="w-4 h-4 text-gray-400" />
-                                                    {registration.userId.phoneNumber}
+                                                    {registration.participantPhone || registration.userId?.phone}
                                                 </div>
                                             )}
                                         </td>
@@ -295,7 +304,9 @@ export default function RegistrationsTab({ eventId }: RegistrationsTabProps) {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            {registration.paymentStatus ? (
+                                            {registration.paymentAmount === 0 || registration.paymentAmount === undefined ? (
+                                                <span className="text-sm text-gray-500">Free</span>
+                                            ) : registration.paymentStatus ? (
                                                 <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getPaymentStatusColor(registration.paymentStatus)}`}>
                                                     {registration.paymentStatus}
                                                 </span>
@@ -307,7 +318,7 @@ export default function RegistrationsTab({ eventId }: RegistrationsTabProps) {
                                             {new Date(registration.registeredAt).toLocaleDateString()}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                            {!registration.attended && registration.status === 'confirmed' && (
+                                            {!(registration.checkedIn || registration.status === 'attended') && registration.status === 'confirmed' && (
                                                 <button
                                                     onClick={() => handleCheckIn(registration._id)}
                                                     className="text-blue-600 hover:text-blue-900 font-medium"
