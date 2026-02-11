@@ -26,7 +26,7 @@ export default function HomeLayout() {
           onPress: async () => {
             try {
               try {
-                await axios.post(`${API_URL}/logout`, {}, { withCredentials: true });
+                await axios.post(`${API_URL}/auth/logout`, {}, { withCredentials: true });
               } catch (error) {
                 console.log('Logout API call failed, but continuing with local signout');
               }
@@ -44,274 +44,274 @@ export default function HomeLayout() {
 
   return (
     <>
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: '#FFFFFF',
-        tabBarInactiveTintColor: '#9CA3AF',
-        tabBarStyle: {
-          backgroundColor: '#1F2937',
-          borderTopWidth: 0,
-          height: Platform.OS === 'ios' ? 75 : 65,
-          paddingBottom: Platform.OS === 'ios' ? 25 : 12,
-          paddingTop: 6,
-          paddingHorizontal: 8,
-          position: 'absolute',
-          bottom: Platform.OS === 'android' ? 25 : 0,
-          left: 0,
-          right: 0,
-          marginLeft: 16,
-          marginRight: 16,
-          marginBottom: Platform.OS === 'android' ? 15 : 0,
-          elevation: 0,
-          shadowOpacity: 0,
-          borderRadius: 32,
-        },
-        tabBarLabelStyle: {
-          fontSize: 9,
-          fontWeight: '600',
-          marginBottom: Platform.OS === 'android' ? 4 : 0,
-        },
-        tabBarItemStyle: {
-          paddingVertical: 2,
-          marginHorizontal: 1,
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="menu"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, focused }) => (
-            <View
-              style={{
-                backgroundColor: focused ? '#FFFFFF20' : 'transparent',
-                borderRadius: 10,
-                padding: 6,
-                minWidth: 36,
-                minHeight: 36,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Ionicons name={focused ? 'home' : 'home-outline'} size={20} color={color} />
-            </View>
-          ),
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarActiveTintColor: '#FFFFFF',
+          tabBarInactiveTintColor: '#9CA3AF',
+          tabBarStyle: {
+            backgroundColor: '#1F2937',
+            borderTopWidth: 0,
+            height: Platform.OS === 'ios' ? 75 : 65,
+            paddingBottom: Platform.OS === 'ios' ? 25 : 12,
+            paddingTop: 6,
+            paddingHorizontal: 8,
+            position: 'absolute',
+            bottom: Platform.OS === 'android' ? 25 : 0,
+            left: 0,
+            right: 0,
+            marginLeft: 16,
+            marginRight: 16,
+            marginBottom: Platform.OS === 'android' ? 15 : 0,
+            elevation: 0,
+            shadowOpacity: 0,
+            borderRadius: 32,
+          },
+          tabBarLabelStyle: {
+            fontSize: 9,
+            fontWeight: '600',
+            marginBottom: Platform.OS === 'android' ? 4 : 0,
+          },
+          tabBarItemStyle: {
+            paddingVertical: 2,
+            marginHorizontal: 1,
+          },
         }}
-      />
-      <Tabs.Screen
-        name="courses"
-        options={{
-          title: 'Courses',
-          tabBarIcon: ({ color, focused }) => (
-            <View
-              style={{
-                backgroundColor: focused ? '#FFFFFF20' : 'transparent',
-                borderRadius: 10,
-                padding: 6,
-                minWidth: 36,
-                minHeight: 36,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Ionicons name={focused ? 'book' : 'book-outline'} size={20} color={color} />
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="events"
-        options={{
-          title: 'Events',
-          tabBarIcon: ({ color, focused }) => (
-            <View
-              style={{
-                backgroundColor: focused ? '#FFFFFF20' : 'transparent',
-                borderRadius: 10,
-                padding: 6,
-                minWidth: 36,
-                minHeight: 36,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={20} color={color} />
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="membership-new"
-        options={{
-          title: 'Membership',
-          tabBarIcon: ({ color, focused }) => (         
-            <View    
-              style={{
-                backgroundColor: focused ? '#FFFFFF20' : 'transparent',
-                borderRadius: 10,
-                padding: 6,           
-                minWidth: 36,
-                minHeight: 36,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}       
-            >  
-              <Ionicons name={focused ? 'card' : 'card-outline'} size={20} color={color} />
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="community"
-        options={{
-          title: 'Community',
-          tabBarIcon: ({ color, focused }) => (
-            <View
-              style={{
-                backgroundColor: focused ? '#FFFFFF20' : 'transparent',
-                borderRadius: 10,
-                padding: 6,
-                minWidth: 36,
-                minHeight: 36,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Ionicons name={focused ? 'people' : 'people-outline'} size={20} color={color} />
-            </View>
-          ),
-        }}
-      />                
-      <Tabs.Screen
-        name="notifications"
-        options={{    
-          href: null, // Hide from tabs navigation
-        }}
-               />
-      <Tabs.Screen
-            name="edit-profile"
-        options={{
-          href: null, // Hide from tabs navigation
-        }}
-            />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          href: null, // Hide from tabs navigation
-        }}
-      />
-      <Tabs.Screen
-        name="my-progress"
-        options={{
-          href: null, // Hide from tabs navigation
-        }}
-      />
-      <Tabs.Screen
-        name="help-support"
-        options={{
-          href: null, // Hide from tabs navigation
-        }}
-      />
-      <Tabs.Screen
-        name="podcasts"
-        options={{
-          href: null, // Hide from tabs navigation
-        }}
-      />
-      <Tabs.Screen
-        name="terms-privacy"
-        options={{
-          href: null, // Hide from tabs navigation
-        }}
-      />
-      <Tabs.Screen
-        name="menu-button"
-        options={{ href: null }}
-      />
-    </Tabs>
-
-    {/* Menu Bottom Sheet Modal */}
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={menuModalVisible}
-      onRequestClose={() => setMenuModalVisible(false)}   
-    >
-      <TouchableOpacity 
-        style={styles.modalOverlay} 
-        activeOpacity={1} 
-        onPress={() => setMenuModalVisible(false)}
       >
-        <TouchableOpacity 
-          style={styles.modalContent} 
+        <Tabs.Screen
+          name="menu"
+          options={{
+            title: 'Home',
+            tabBarIcon: ({ color, focused }) => (
+              <View
+                style={{
+                  backgroundColor: focused ? '#FFFFFF20' : 'transparent',
+                  borderRadius: 10,
+                  padding: 6,
+                  minWidth: 36,
+                  minHeight: 36,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Ionicons name={focused ? 'home' : 'home-outline'} size={20} color={color} />
+              </View>
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="courses"
+          options={{
+            title: 'Courses',
+            tabBarIcon: ({ color, focused }) => (
+              <View
+                style={{
+                  backgroundColor: focused ? '#FFFFFF20' : 'transparent',
+                  borderRadius: 10,
+                  padding: 6,
+                  minWidth: 36,
+                  minHeight: 36,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Ionicons name={focused ? 'book' : 'book-outline'} size={20} color={color} />
+              </View>
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="events"
+          options={{
+            title: 'Events',
+            tabBarIcon: ({ color, focused }) => (
+              <View
+                style={{
+                  backgroundColor: focused ? '#FFFFFF20' : 'transparent',
+                  borderRadius: 10,
+                  padding: 6,
+                  minWidth: 36,
+                  minHeight: 36,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={20} color={color} />
+              </View>
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="membership-new"
+          options={{
+            title: 'Membership',
+            tabBarIcon: ({ color, focused }) => (
+              <View
+                style={{
+                  backgroundColor: focused ? '#FFFFFF20' : 'transparent',
+                  borderRadius: 10,
+                  padding: 6,
+                  minWidth: 36,
+                  minHeight: 36,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Ionicons name={focused ? 'card' : 'card-outline'} size={20} color={color} />
+              </View>
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="community"
+          options={{
+            title: 'Community',
+            tabBarIcon: ({ color, focused }) => (
+              <View
+                style={{
+                  backgroundColor: focused ? '#FFFFFF20' : 'transparent',
+                  borderRadius: 10,
+                  padding: 6,
+                  minWidth: 36,
+                  minHeight: 36,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Ionicons name={focused ? 'people' : 'people-outline'} size={20} color={color} />
+              </View>
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="notifications"
+          options={{
+            href: null, // Hide from tabs navigation
+          }}
+        />
+        <Tabs.Screen
+          name="edit-profile"
+          options={{
+            href: null, // Hide from tabs navigation
+          }}
+        />
+        <Tabs.Screen
+          name="settings"
+          options={{
+            href: null, // Hide from tabs navigation
+          }}
+        />
+        <Tabs.Screen
+          name="my-progress"
+          options={{
+            href: null, // Hide from tabs navigation
+          }}
+        />
+        <Tabs.Screen
+          name="help-support"
+          options={{
+            href: null, // Hide from tabs navigation
+          }}
+        />
+        <Tabs.Screen
+          name="podcasts"
+          options={{
+            href: null, // Hide from tabs navigation
+          }}
+        />
+        <Tabs.Screen
+          name="terms-privacy"
+          options={{
+            href: null, // Hide from tabs navigation
+          }}
+        />
+        <Tabs.Screen
+          name="menu-button"
+          options={{ href: null }}
+        />
+      </Tabs>
+
+      {/* Menu Bottom Sheet Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={menuModalVisible}
+        onRequestClose={() => setMenuModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
           activeOpacity={1}
-          onPress={(e) => e.stopPropagation()}
+          onPress={() => setMenuModalVisible(false)}
         >
-          {/* Handle Bar */}
-          <View style={styles.handleBar} />
+          <TouchableOpacity
+            style={styles.modalContent}
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
+            {/* Handle Bar */}
+            <View style={styles.handleBar} />
 
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {/* Header */}
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Quick Access</Text>
-            </View>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {/* Header */}
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Quick Access</Text>
+              </View>
 
-            {/* Menu Options - Only Shops and Donations */}
-            <View style={styles.menuOptions}>
-              <TouchableOpacity 
-                style={styles.menuItem}
-                onPress={() => {
-                  setMenuModalVisible(false);
-                  setTimeout(() => {
-                    router.push('/shops');
-                  }, 300);
-                }}
-              >
-                <View style={styles.menuItemContent}>
-                  <Text style={styles.menuEmoji}>�</Text>
-                  <Text style={styles.menuText}>Shops</Text>
-                </View>
-                <Text style={styles.menuArrow}>›</Text>
-              </TouchableOpacity>
+              {/* Menu Options - Only Shops and Donations */}
+              <View style={styles.menuOptions}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    setMenuModalVisible(false);
+                    setTimeout(() => {
+                      router.push('/shops');
+                    }, 300);
+                  }}
+                >
+                  <View style={styles.menuItemContent}>
+                    <Text style={styles.menuEmoji}>�</Text>
+                    <Text style={styles.menuText}>Shops</Text>
+                  </View>
+                  <Text style={styles.menuArrow}>›</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity 
-                style={styles.menuItem}
-                onPress={() => {
-                  setMenuModalVisible(false);
-                  setTimeout(() => {
-                    router.push('/donations');
-                  }, 300);
-                }}
-              >
-                <View style={styles.menuItemContent}>
-                  <Text style={styles.menuEmoji}>💝</Text>
-                  <Text style={styles.menuText}>Donations</Text>
-                </View>
-                <Text style={styles.menuArrow}>›</Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    setMenuModalVisible(false);
+                    setTimeout(() => {
+                      router.push('/donations');
+                    }, 300);
+                  }}
+                >
+                  <View style={styles.menuItemContent}>
+                    <Text style={styles.menuEmoji}>💝</Text>
+                    <Text style={styles.menuText}>Donations</Text>
+                  </View>
+                  <Text style={styles.menuArrow}>›</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity 
-                style={styles.menuItem}
-                onPress={() => {
-                  setMenuModalVisible(false);
-                  setTimeout(() => {
-                    // @ts-ignore - Route will be available after restart
-                    router.push('/(home)/podcasts');
-                  }, 300);
-                }}
-              >
-                <View style={styles.menuItemContent}>
-                  <Text style={styles.menuEmoji}>🎙️</Text>
-                  <Text style={styles.menuText}>Podcasts</Text>
-                </View>
-                <Text style={styles.menuArrow}>›</Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    setMenuModalVisible(false);
+                    setTimeout(() => {
+                      // @ts-ignore - Route will be available after restart
+                      router.push('/(home)/podcasts');
+                    }, 300);
+                  }}
+                >
+                  <View style={styles.menuItemContent}>
+                    <Text style={styles.menuEmoji}>🎙️</Text>
+                    <Text style={styles.menuText}>Podcasts</Text>
+                  </View>
+                  <Text style={styles.menuArrow}>›</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </TouchableOpacity>
         </TouchableOpacity>
-      </TouchableOpacity>
-    </Modal>
+      </Modal>
     </>
   );
 }

@@ -2,7 +2,7 @@
 import { Alert } from 'react-native';
 // import RazorpayCheckout from 'react-native-razorpay'; // Install: npm install react-native-razorpay
 
-const API_URL = 'http://192.168.0.100:3000/api'; // Update with your backend URL
+import { API_BASE_URL as API_URL } from '../config/api';
 
 /**
  * Purchase membership plan

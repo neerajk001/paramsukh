@@ -39,8 +39,8 @@ export const useProductStore = create<ProductState>((set) => ({
         try {
             const response = await axios.get(`${API_URL}/shops/${shopId}/products`);
 
-            if (response.data.success) {
-                const backendProducts = response.data.data.products;
+            if (response.data && response.data.success) {
+                const backendProducts = response.data.data.products || [];
 
                 const formattedProducts = backendProducts.map((p: any) => ({
                     id: p._id,
@@ -57,12 +57,13 @@ export const useProductStore = create<ProductState>((set) => ({
 
                 set({ products: formattedProducts, isLoading: false });
             } else {
-                set({ isLoading: false, error: 'Failed to fetch products' });
+                console.log('Fetch products response:', response.data);
+                set({ products: [], isLoading: false, error: null });
             }
         } catch (error: any) {
             // Fallback for demo if API fails or returns 404
             console.error('Fetch Products Error:', error);
-            set({ isLoading: false, error: 'Failed to load products' });
+            set({ products: [], isLoading: false, error: null });
         }
     },
 

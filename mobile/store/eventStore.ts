@@ -73,7 +73,7 @@ export const useEventStore = create<EventState>((set, get) => ({
             const endpoint = tab === 'upcoming' ? `${API_URL}/events/upcoming` : `${API_URL}/events/past`;
             const response = await axios.get(endpoint);
 
-            if (response.data.success) {
+            if (response.data && response.data.success) {
                 // Map backend event to frontend interface if needed, 
                 // but direct assignment usually works if keys match enough.
                 // We might need to ensure 'attendees' is populated or used from currentAttendees.
@@ -84,11 +84,13 @@ export const useEventStore = create<EventState>((set, get) => ({
                 }));
                 set({ events: mappedEvents, isLoading: false });
             } else {
-                set({ events: [], isLoading: false, error: response.data.message });
+                console.log(`Fetch ${tab} Events response:`, response.data);
+                set({ events: [], isLoading: false, error: null });
             }
         } catch (error: any) {
             console.error(`Fetch ${tab} Events Error:`, error);
-            set({ events: [], isLoading: false, error: 'Failed to load events' });
+            // Don't show error to user, show empty list
+            set({ events: [], isLoading: false, error: null });
         }
     },
 

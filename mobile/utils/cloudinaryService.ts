@@ -3,7 +3,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { Alert } from 'react-native';
 
-const API_URL = 'http://192.168.0.100:3000/api'; // Update with your backend URL
+import { API_BASE_URL as API_URL } from '../config/api';
 
 /**
  * Request permissions for camera and media library
@@ -11,7 +11,7 @@ const API_URL = 'http://192.168.0.100:3000/api'; // Update with your backend URL
 export const requestMediaPermissions = async () => {
   const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
   const mediaPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  
+
   return cameraPermission.granted && mediaPermission.granted;
 };
 

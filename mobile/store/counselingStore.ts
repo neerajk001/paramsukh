@@ -31,15 +31,33 @@ export const useCounselingStore = create<CounselingState>((set) => ({
         set({ isLoading: true, error: null });
         try {
             const response = await axios.get(`${API_URL}/counseling/types`);
-            if (response.data.success) {
-                set({ counselingTypes: response.data.data.types, isLoading: false });
+            if (response.data && response.data.success) {
+                set({ counselingTypes: response.data.data.types || [], isLoading: false });
             } else {
-                set({ isLoading: false, error: 'Failed to fetch counseling types' });
+                console.log('Fetch counseling types response:', response.data);
+                // Fallback UI data if backend returns empty/failure
+                set({
+                    counselingTypes: [
+                        { id: 'general', title: 'General Counseling', icon: '🧠', color: '#6366F1', bgColor: '#EEF2FF', description: 'Talk about anything on your mind.', duration: '45 mins', isFree: true },
+                        { id: 'relationship', title: 'Relationship Advice', icon: '❤️', color: '#EC4899', bgColor: '#FCE7F3', description: 'Resolve conflicts and build stronger bonds.', duration: '60 mins' },
+                        { id: 'career', title: 'Career Guidance', icon: '💼', color: '#10B981', bgColor: '#D1FAE5', description: 'Plan your professional future.', duration: '45 mins' }
+                    ],
+                    isLoading: false,
+                    error: null
+                });
             }
         } catch (error: any) {
             console.error('Fetch Counseling Types Error:', error);
             // Fallback to static if endpoint doesn't exist yet/fails
-            set({ isLoading: false, error: 'Failed to load counseling services' });
+            set({
+                counselingTypes: [
+                    { id: 'general', title: 'General Counseling', icon: '🧠', color: '#6366F1', bgColor: '#EEF2FF', description: 'Talk about anything on your mind.', duration: '45 mins', isFree: true },
+                    { id: 'relationship', title: 'Relationship Advice', icon: '❤️', color: '#EC4899', bgColor: '#FCE7F3', description: 'Resolve conflicts and build stronger bonds.', duration: '60 mins' },
+                    { id: 'career', title: 'Career Guidance', icon: '💼', color: '#10B981', bgColor: '#D1FAE5', description: 'Plan your professional future.', duration: '45 mins' }
+                ],
+                isLoading: false,
+                error: null
+            });
         }
     },
 

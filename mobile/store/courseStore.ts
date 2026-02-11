@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import axios from 'axios';
 import { API_URL } from '../config/api';
+import { useAuthStore } from './authStore';
 
 export interface Video {
     _id: string;
@@ -95,24 +96,31 @@ export const useCourseStore = create<CourseState>((set) => ({
     fetchCourses: async () => {
         set({ isLoading: true, error: null });
         try {
-            const response = await axios.get(`${API_URL}/courses/all`);
-            if (response.data.success) {
-                set({ courses: response.data.courses, isLoading: false });
+            const token = useAuthStore.getState().token;
+            // Optionally include token if available, but don't fail if not
+            const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+            const response = await axios.get(`${API_URL}/courses/all`, { headers });
+
+            if (response.data && response.data.success) {
+                set({ courses: response.data.courses || [], isLoading: false });
             } else {
-                // Fallback or error 
-                set({ isLoading: false, error: response.data.message });
+                console.log('Fetch courses response:', response.data);
+                set({ courses: [], isLoading: false });
             }
         } catch (error: any) {
             console.error('Fetch Courses Error:', error);
-            // Fallback for demo purposes if backend fails/is empty
-            set({ isLoading: false, error: error.message || 'Failed to fetch courses' });
+            set({ isLoading: false, courses: [], error: null });
         }
     },
 
     fetchCourseById: async (id: string) => {
         set({ isLoading: true, error: null });
         try {
-            const response = await axios.get(`${API_URL}/courses/${id}`);
+            const token = useAuthStore.getState().token;
+            const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+            const response = await axios.get(`${API_URL}/courses/${id}`, { headers });
             if (response.data.success) {
                 set({ currentCourse: response.data.course, isLoading: false });
             } else {
@@ -127,11 +135,12 @@ export const useCourseStore = create<CourseState>((set) => ({
     fetchCourseBySlug: async (slug: string) => {
         set({ isLoading: true, error: null });
         try {
-            // Note: Add endpoint for slug if needed, using custom query for now or by-id pattern if slug unsupported
-            // Backend Controller has getCourseBySlug, so assuming route exists
-            // Since our backend route might be /courses/slug/:slug or similar, check routes.
-            // For now assuming we might not need this immediately for mobile, can skip or assume generic route
-            set({ isLoading: false }); // Placeholder
+            const token = useAuthStore.getState().token;
+            const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+            // Assuming endpoint might support slug or using search. 
+            // Implement if needed.
+            set({ isLoading: false });
         } catch (error) {
             set({ isLoading: false, error: 'Failed to fetch course' });
         }
@@ -139,19 +148,28 @@ export const useCourseStore = create<CourseState>((set) => ({
 
     fetchEnrollmentProgress: async (courseId: string) => {
         try {
-            const response = await axios.get(`${API_URL}/courses/${courseId}/progress`);
+            const token = useAuthStore.getState().token;
+            if (!token) return;
+
+            const response = await axios.get(`${API_URL}/courses/${courseId}/progress`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             if (response.data.success) {
                 set({ enrollmentProgress: response.data.data });
             }
         } catch (error: any) {
             console.error('Fetch Progress Error:', error);
-            // Don't set error state, just log it
         }
     },
 
     markVideoComplete: async (courseId: string, videoId: string) => {
         try {
-            const response = await axios.post(`${API_URL}/courses/${courseId}/progress/video/${videoId}`);
+            const token = useAuthStore.getState().token;
+            if (!token) return false;
+
+            const response = await axios.post(`${API_URL}/courses/${courseId}/progress/video/${videoId}`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             if (response.data.success) {
                 set({ enrollmentProgress: response.data.data });
                 return true;
@@ -165,7 +183,12 @@ export const useCourseStore = create<CourseState>((set) => ({
 
     markPdfComplete: async (courseId: string, pdfId: string) => {
         try {
-            const response = await axios.post(`${API_URL}/courses/${courseId}/progress/pdf/${pdfId}`);
+            const token = useAuthStore.getState().token;
+            if (!token) return false;
+
+            const response = await axios.post(`${API_URL}/courses/${courseId}/progress/pdf/${pdfId}`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             if (response.data.success) {
                 set({ enrollmentProgress: response.data.data });
                 return true;

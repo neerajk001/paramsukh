@@ -43,13 +43,11 @@ export const useShopStore = create<ShopState>((set) => ({
         try {
             const response = await axios.get(`${API_URL}/shops`, { params });
 
-            if (response.data.success) {
+            if (response.data && response.data.success) {
                 // Transform backend data to match UI expectations where necessary
-                const backendShops = response.data.data.shops;
+                const backendShops = response.data.data.shops || [];
 
                 // Map backend shop structure to what the UI expects (if different)
-                // For now, we'll try to use the backend structure as much as possible
-                // but ensure critical UI fields exist
                 const formattedShops = backendShops.map((shop: any) => ({
                     ...shop,
                     id: shop._id,
@@ -62,12 +60,13 @@ export const useShopStore = create<ShopState>((set) => ({
 
                 set({ shops: formattedShops, isLoading: false });
             } else {
-                set({ isLoading: false, error: 'Failed to fetch shops' });
+                console.log('Fetch shops response:', response.data);
+                set({ shops: [], isLoading: false, error: null });
             }
         } catch (error: any) {
+            // Don't show error to user, show empty list
             console.error('Fetch Shops Error:', error);
-            const msg = error.response?.data?.message || 'Failed to fetch shops';
-            set({ isLoading: false, error: msg });
+            set({ shops: [], isLoading: false, error: null });
         }
     }
 }));

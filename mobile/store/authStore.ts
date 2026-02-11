@@ -16,6 +16,7 @@ interface User {
 
 interface AuthState {
   user: User | null;
+  token: string | null; // Added token
   isLoading: boolean;
   error: string | null;
 
@@ -32,17 +33,21 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   // TEMPORARY: Set to null to enable login screen
   user: null,
+  token: null, // Initialize token
   isLoading: false,
   error: null,
 
   googleSignIn: async (idToken: string) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${API_URL}/google`, { idToken });
+      const response = await axios.post(`${API_URL}/auth/google`, { idToken });
 
       if (response.data.success) {
         await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
-        set({ user: response.data.user, isLoading: false });
+        if (response.data.token) {
+          await AsyncStorage.setItem('token', response.data.token);
+        }
+        set({ user: response.data.user, token: response.data.token, isLoading: false });
         return { success: true };
       }
 
@@ -59,7 +64,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   sendOTP: async (phone: string) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${API_URL}/send-otp`, { phone });
+      const response = await axios.post(`${API_URL}/auth/send-otp`, { phone });
 
       set({ isLoading: false });
       return {
@@ -69,7 +74,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       };
     } catch (error: any) {
       console.error('Send OTP Error:', error);
-      console.error('Attempted API URL:', `${API_URL}/send-otp`);
+      console.error('Attempted API URL:', `${API_URL}/auth/send-otp`);
       const msg = error.response?.data?.message || 'Failed to send OTP. Check your network connection and API URL.';
       set({ isLoading: false, error: msg });
       return { success: false, message: msg };
@@ -80,7 +85,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       console.log('Verifying OTP with:', { phone, code, displayName }); // Log payload
-      const response = await axios.post(`${API_URL}/verify-otp`, {
+      const response = await axios.post(`${API_URL}/auth/verify-otp`, {
         phone,
         otp: code,
         displayName
@@ -88,7 +93,10 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       if (response.data.success) {
         await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
-        set({ user: response.data.user, isLoading: false });
+        if (response.data.token) {
+          await AsyncStorage.setItem('token', response.data.token);
+        }
+        set({ user: response.data.user, token: response.data.token, isLoading: false });
         // Load additional user data if needed
         return { success: true };
       }
@@ -105,15 +113,17 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     await AsyncStorage.removeItem('user');
-    set({ user: null });
+    await AsyncStorage.removeItem('token');
+    set({ user: null, token: null });
   },
 
   loadUser: async () => {
     // Load user from AsyncStorage
     try {
       const userStr = await AsyncStorage.getItem('user');
+      const token = await AsyncStorage.getItem('token');
       if (userStr) {
-        set({ user: JSON.parse(userStr) });
+        set({ user: JSON.parse(userStr), token });
       }
     } catch (error) {
       console.error('Error loading user:', error);

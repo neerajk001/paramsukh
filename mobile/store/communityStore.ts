@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import axios from 'axios';
 import { API_URL } from '../config/api';
+import { useAuthStore } from './authStore';
 
 export interface Author {
     _id: string;
@@ -82,23 +83,41 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
     fetchMyGroups: async () => {
         set({ isLoading: true, error: null });
         try {
-            const response = await axios.get(`${API_URL}/community/my-groups`);
-            if (response.data.success) {
-                set({ groups: response.data.groups, isLoading: false });
+            const token = useAuthStore.getState().token;
+            if (!token) {
+                set({ groups: [], isLoading: false });
+                return;
+            }
+
+            const response = await axios.get(`${API_URL}/community/my-groups`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (response.data && response.data.success) {
+                set({ groups: response.data.groups || [], isLoading: false });
             } else {
-                set({ groups: [], isLoading: false, error: response.data.message });
+                console.log('Fetch groups response:', response.data);
+                set({ groups: [], isLoading: false, error: null });
             }
         } catch (error: any) {
             console.error('Fetch Groups Error:', error);
-            set({ groups: [], isLoading: false, error: 'Failed to load groups' });
+            // Don't show error to user, show empty list
+            set({ groups: [], isLoading: false, error: null });
         }
     },
 
     fetchGroupPosts: async (groupId: string, page = 1) => {
         set({ isLoading: true, error: null });
         try {
+            const token = useAuthStore.getState().token;
+            // Public posts might be allowed, but usually not for closed groups.
+            // We'll send token if available.
+
+            const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
             const response = await axios.get(`${API_URL}/community/groups/${groupId}/posts`, {
-                params: { page }
+                params: { page },
+                headers
             });
             if (response.data.success) {
                 // If page 1, replace posts. If > 1, append (for pagination logic if implemented)
@@ -132,10 +151,16 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
         const endpoint = type === 'image' ? '/upload/image?folder=community' : '/upload/video?folder=community_videos';
 
         try {
+            const token = useAuthStore.getState().token;
+            const headers: any = {
+                'Content-Type': 'multipart/form-data',
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const response = await axios.post(`${API_URL}${endpoint}`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
+                headers
             });
 
             if (response.data.success) {
@@ -151,9 +176,17 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
     createPost: async (groupId: string, content: string, images?: string[]) => {
         set({ isLoading: true, error: null });
         try {
+            const token = useAuthStore.getState().token;
+            if (!token) {
+                set({ isLoading: false, error: 'You must be logged in to post' });
+                return false;
+            }
+
             const response = await axios.post(`${API_URL}/community/groups/${groupId}/posts`, {
                 content,
                 images
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
             });
 
             if (response.data.success) {
@@ -189,7 +222,12 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
         }));
 
         try {
-            await axios.post(`${API_URL}/community/posts/${postId}/like`);
+            const token = useAuthStore.getState().token;
+            if (!token) throw new Error("No token");
+
+            await axios.post(`${API_URL}/community/posts/${postId}/like`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             // Backend handles actual logic
         } catch (error) {
             console.error('Like Post Error:', error);
@@ -217,7 +255,12 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
         }));
 
         try {
-            await axios.delete(`${API_URL}/community/posts/${postId}`);
+            const token = useAuthStore.getState().token;
+            if (!token) throw new Error("No token");
+
+            await axios.delete(`${API_URL}/community/posts/${postId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
         } catch (error) {
             console.error('Delete Post Error:', error);
             // Revert
@@ -227,7 +270,12 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
 
     fetchPostComments: async (postId: string) => {
         try {
-            const response = await axios.get(`${API_URL}/community/posts/${postId}/comments`);
+            const token = useAuthStore.getState().token;
+            const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+            const response = await axios.get(`${API_URL}/community/posts/${postId}/comments`, {
+                headers
+            });
             if (response.data.success) {
                 set(state => ({
                     comments: {
@@ -243,8 +291,13 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
 
     addComment: async (postId: string, content: string) => {
         try {
+            const token = useAuthStore.getState().token;
+            if (!token) return false;
+
             const response = await axios.post(`${API_URL}/community/posts/${postId}/comments`, {
                 content
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
             });
 
             if (response.data.success) {
@@ -271,7 +324,12 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
 
     toggleCommentLike: async (commentId: string, postId: string) => {
         try {
-            await axios.post(`${API_URL}/community/comments/${commentId}/like`);
+            const token = useAuthStore.getState().token;
+            if (!token) return;
+
+            await axios.post(`${API_URL}/community/comments/${commentId}/like`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
 
             // Update comment like status
             set(state => ({

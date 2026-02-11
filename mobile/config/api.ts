@@ -1,36 +1,60 @@
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
-// Get your PC's IP address (shown when you run `npm start`)
-const LOCAL_IP = '192.168.1.11'; // Your PC's IP from Expo
+// Dynamically retrieve the host if available (for Expo Go / Dev Client)
+const getHost = () => {
+  // If defined in expoConfig (standard in newer Expo versions)
+  if (Constants.expoConfig?.hostUri) {
+    return Constants.expoConfig.hostUri.split(':')[0];
+  }
+  // Fallback for older Expo versions or bare workflow
+  // @ts-ignore
+  if (Constants.manifest?.debuggerHost) {
+    // @ts-ignore
+    return Constants.manifest.debuggerHost.split(':')[0];
+  }
+  return null;
+};
 
-// Determine the API URL based on the environment
-const getApiUrl = () => {
-  // For production, use your deployed backend URL
+// Known fallback IPs (Office, Home, etc.) - You can add more here
+const FALLBACK_IPS = [
+  '192.168.0.103', // Home/Current
+  '192.168.1.11',  // Office
+];
+
+// Select the IP: Dynamic Host > First Fallback > Localhost
+const LOCAL_IP = getHost() || FALLBACK_IPS[0];
+
+// Determine the Base URL (without /api/auth or /api)
+const getBaseUrl = () => {
   if (Constants.expoConfig?.extra?.apiUrl) {
-    return Constants.expoConfig.extra.apiUrl;
+    return Constants.expoConfig.extra.apiUrl.replace('/api', '').replace('/auth', '');
   }
 
-  // For development
   if (__DEV__) {
     if (Platform.OS === 'android') {
-      // Android emulator - use special alias
-      // return 'http://10.0.2.2:3000/api/auth';
-      // Physical device or Expo Go - use local IP
-      return `http://${LOCAL_IP}:3000/api/auth`;
+      // Android emulator
+      // return 'http://10.0.2.2:3000';
+      return `http://${LOCAL_IP}:3000`;
     } else if (Platform.OS === 'ios') {
       // iOS simulator
-      return 'http://localhost:3000/api/auth';
+      return 'http://localhost:3000';
     } else {
-      // Physical device or web
-      return `http://${LOCAL_IP}:3000/api/auth`;
+      // Web / Other
+      return `http://${LOCAL_IP}:3000`;
     }
   }
 
-  // Fallback
-  return 'http://localhost:3000/api/auth';
+  return 'http://localhost:3000';
 };
 
-export const API_URL = getApiUrl();
+export const BASE_URL = getBaseUrl();
+export const API_BASE_URL = `${BASE_URL}/api`;
+export const API_URL = API_BASE_URL; // Correctly pointing to .../api now
 
-console.log('🌐 API URL:', API_URL);
+console.log('🌐 API Configuration:', {
+  LOCAL_IP,
+  BASE_URL,
+  API_BASE_URL,
+  API_URL
+});
