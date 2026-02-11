@@ -82,7 +82,7 @@ export default function VideosTab({ eventId, videos, onUpdate }: VideosTabProps)
 
     const getYouTubeThumbnail = (url: string) => {
         // Extract video ID from YouTube URL
-        const youtubRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+        const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
         const match = url.match(youtubeRegex);
         if (match && match[1]) {
             return `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`;

@@ -24,6 +24,7 @@ export default function PhotosTab({ eventId, photos, onUpdate }: PhotosTabProps)
         captions: ['']
     });
     const [submitting, setSubmitting] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [deleting, setDeleting] = useState<number | null>(null);
 
     const addUrlField = () => {
@@ -50,6 +51,46 @@ export default function PhotosTab({ eventId, photos, onUpdate }: PhotosTabProps)
         const newCaptions = [...formData.captions];
         newCaptions[index] = value;
         setFormData({ ...formData, captions: newCaptions });
+    };
+
+    const handleLocalUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        const uploadData = new FormData();
+        files.forEach((file) => uploadData.append('images', file));
+
+        const toastId = toast.loading(`Uploading ${files.length} photo${files.length > 1 ? 's' : ''}...`);
+        setUploading(true);
+
+        try {
+            const response = await apiClient.post(
+                '/api/upload/images?folder=events/photos',
+                uploadData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                }
+            );
+
+            if (response.data.success) {
+                const uploaded = response.data.data?.images || [];
+                if (uploaded.length > 0) {
+                    setFormData((prev) => ({
+                        urls: [...prev.urls, ...uploaded.map((img: { url: string }) => img.url)],
+                        captions: [...prev.captions, ...uploaded.map(() => '')],
+                    }));
+                }
+                toast.success('Photos uploaded successfully!', { id: toastId });
+            }
+        } catch (error: any) {
+            console.error('Upload error:', error);
+            toast.error(error.response?.data?.message || 'Upload failed', { id: toastId });
+        } finally {
+            setUploading(false);
+            e.target.value = '';
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -185,8 +226,29 @@ export default function PhotosTab({ eventId, photos, onUpdate }: PhotosTabProps)
                         <form onSubmit={handleSubmit} className="p-6">
                             <div className="space-y-4">
                                 <p className="text-sm text-gray-600">
-                                    Add one or more photo URLs. Photos will be displayed in the event gallery.
+                                    Upload from your computer or add photo URLs. Photos will be displayed in the event gallery.
                                 </p>
+
+                                <div className="flex items-center gap-3">
+                                    <div className="relative">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            multiple
+                                            onChange={handleLocalUpload}
+                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                            disabled={uploading}
+                                        />
+                                        <button
+                                            type="button"
+                                            disabled={uploading}
+                                            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg border border-gray-300 text-sm font-medium transition whitespace-nowrap"
+                                        >
+                                            {uploading ? 'Uploading...' : 'Upload Photos'}
+                                        </button>
+                                    </div>
+                                    <span className="text-xs text-gray-500">or paste image URLs below</span>
+                                </div>
 
                                 {formData.urls.map((url, index) => (
                                     <div key={index} className="space-y-2 p-4 bg-gray-50 rounded-lg">
@@ -206,7 +268,6 @@ export default function PhotosTab({ eventId, photos, onUpdate }: PhotosTabProps)
                                         </div>
                                         <input
                                             type="url"
-                                            required
                                             value={url}
                                             onChange={(e) => updateUrl(index, e.target.value)}
                                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"

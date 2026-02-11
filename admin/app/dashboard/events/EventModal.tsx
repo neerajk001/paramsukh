@@ -50,6 +50,7 @@ export default function EventModal({ isOpen, onClose, event, onSuccess }: EventM
         metaDescription: ''
     });
     const [submitting, setSubmitting] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [tagInput, setTagInput] = useState('');
     const [requirementInput, setRequirementInput] = useState('');
     const [bringInput, setBringInput] = useState('');
@@ -167,6 +168,43 @@ export default function EventModal({ isOpen, onClose, event, onSuccess }: EventM
 
     const removeBring = (index: number) => {
         setFormData({ ...formData, whatToBring: formData.whatToBring.filter((_, i) => i !== index) });
+    };
+
+    const handleFileUpload = async (
+        e: React.ChangeEvent<HTMLInputElement>,
+        fieldName: 'thumbnailUrl' | 'bannerUrl',
+        folder: string
+    ) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const uploadData = new FormData();
+        uploadData.append('image', file);
+
+        const toastId = toast.loading('Uploading image...');
+        setUploading(true);
+
+        try {
+            const response = await apiClient.post(`/api/upload/image?folder=${encodeURIComponent(folder)}`, uploadData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            if (response.data.success) {
+                setFormData((prev) => ({
+                    ...prev,
+                    [fieldName]: response.data.data.url
+                }));
+                toast.success('Image uploaded successfully!', { id: toastId });
+            }
+        } catch (error: any) {
+            console.error('Upload error:', error);
+            toast.error(error.response?.data?.message || 'Upload failed', { id: toastId });
+        } finally {
+            setUploading(false);
+            e.target.value = '';
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -291,26 +329,62 @@ export default function EventModal({ isOpen, onClose, event, onSuccess }: EventM
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         Thumbnail URL
                                     </label>
-                                    <input
-                                        type="url"
-                                        value={formData.thumbnailUrl}
-                                        onChange={(e) => setFormData({ ...formData, thumbnailUrl: e.target.value })}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="https://..."
-                                    />
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="url"
+                                            value={formData.thumbnailUrl}
+                                            onChange={(e) => setFormData({ ...formData, thumbnailUrl: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="https://..."
+                                        />
+                                        <div className="relative">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => handleFileUpload(e, 'thumbnailUrl', 'events/thumbnails')}
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                disabled={uploading}
+                                            />
+                                            <button
+                                                type="button"
+                                                disabled={uploading}
+                                                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg border border-gray-300 text-sm font-medium transition whitespace-nowrap"
+                                            >
+                                                Upload
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         Banner URL
                                     </label>
-                                    <input
-                                        type="url"
-                                        value={formData.bannerUrl}
-                                        onChange={(e) => setFormData({ ...formData, bannerUrl: e.target.value })}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="https://..."
-                                    />
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="url"
+                                            value={formData.bannerUrl}
+                                            onChange={(e) => setFormData({ ...formData, bannerUrl: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="https://..."
+                                        />
+                                        <div className="relative">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => handleFileUpload(e, 'bannerUrl', 'events/banners')}
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                disabled={uploading}
+                                            />
+                                            <button
+                                                type="button"
+                                                disabled={uploading}
+                                                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg border border-gray-300 text-sm font-medium transition whitespace-nowrap"
+                                            >
+                                                Upload
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
