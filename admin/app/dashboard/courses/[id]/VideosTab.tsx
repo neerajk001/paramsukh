@@ -8,7 +8,8 @@ import { Plus, Edit, Trash2, GripVertical, Play, X } from 'lucide-react';
 interface Video {
     _id: string;
     title: string;
-    url: string;
+    videoUrl?: string;
+    url?: string;
     duration: number;
     thumbnailUrl?: string;
     order?: number;
@@ -38,12 +39,28 @@ export default function VideosTab({ courseId, videos, onUpdate }: VideosTabProps
 
     const sortedVideos = [...videos].sort((a, b) => (a.order || 0) - (b.order || 0));
 
+    const formatMinutesToDuration = (minutesValue: number | string) => {
+        const minutes = typeof minutesValue === 'string' ? parseFloat(minutesValue) : minutesValue;
+        if (!Number.isFinite(minutes) || minutes <= 0) return '';
+
+        const totalSeconds = Math.round(minutes * 60);
+        const mins = Math.floor(totalSeconds / 60);
+        const secs = totalSeconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const getNextOrder = () => {
+        if (!videos || videos.length === 0) return 1;
+        const maxOrder = Math.max(...videos.map((video) => video.order ?? 0));
+        return maxOrder + 1;
+    };
+
     const openModal = (video?: Video) => {
         if (video) {
             setEditingVideo(video);
             setFormData({
                 title: video.title,
-                url: video.url,
+                url: video.videoUrl || video.url || '',
                 duration: video.duration,
                 thumbnailUrl: video.thumbnailUrl || '',
                 description: video.description || '',
@@ -80,7 +97,8 @@ export default function VideosTab({ courseId, videos, onUpdate }: VideosTabProps
 
         // Create form data
         const formData = new FormData();
-        formData.append('file', file); // API expects 'file'
+        const fieldName = type === 'video' ? 'video' : 'image';
+        formData.append(fieldName, file);
 
 
         setUploading(true);
@@ -133,12 +151,21 @@ export default function VideosTab({ courseId, videos, onUpdate }: VideosTabProps
         e.preventDefault();
         setSubmitting(true);
 
+        const payload = {
+            title: formData.title,
+            description: formData.description,
+            duration: formatMinutesToDuration(formData.duration),
+            videoUrl: formData.url,
+            thumbnailUrl: formData.thumbnailUrl,
+            order: editingVideo?.order ?? getNextOrder(),
+        };
+
         try {
             if (editingVideo) {
-                await apiClient.put(`/api/courses/${courseId}/videos/${editingVideo._id}`, formData);
+                await apiClient.put(`/api/courses/${courseId}/videos/${editingVideo._id}`, payload);
                 toast.success('Video updated successfully');
             } else {
-                await apiClient.post(`/api/courses/${courseId}/videos`, formData);
+                await apiClient.post(`/api/courses/${courseId}/videos`, payload);
                 toast.success('Video added successfully');
             }
             closeModal();
