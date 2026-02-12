@@ -1,66 +1,73 @@
 import express from 'express';
+import { protectedRoutes } from '../../middleware/protectedRoutes.js';
+import { assessmentRequired } from '../../middleware/assessmentRequired.js';
 import {
   enrollInCourse,
   getMyEnrollments,
   getEnrollmentByCourse,
+  unenrollFromCourse,
   markVideoComplete,
   markPdfComplete,
   getCourseProgress,
   updateVideoPosition,
-  unenrollFromCourse,
   checkEnrollmentStatus,
   getContinueLearning
 } from '../../controller/enrollment/enrollment.controller.js';
-import { protectedRoutes } from '../../middleware/protectedRoutes.js';
+import {
+  getEnrollmentStats,
+  getEnrollmentStatsByCourse,
+  getRecentEnrollments
+} from '../../controller/enrollment/enrollmentStats.controller.js';
+import { adminAuth } from '../../middleware/adminAuth.js';
 
 const router = express.Router();
 
-// All enrollment routes require authentication
+// ========================================
+// Admin Stats Routes (require admin API key)
+// ========================================
+router.get('/stats', adminAuth, getEnrollmentStats);
+router.get('/stats/courses', adminAuth, getEnrollmentStatsByCourse);
+router.get('/stats/recent', adminAuth, getRecentEnrollments);
+
+// ========================================
+// User Enrollment Routes (require authentication)
+// ========================================
+
+// All remaining enrollment routes require authentication
 router.use(protectedRoutes);
 
 // ========================================
 // Enrollment Routes
 // ========================================
 
-// Enroll in a course
-// POST /api/enrollments/enroll
-router.post('/enroll', enrollInCourse);
+// Enroll in a course (requires assessment completion)
+router.post('/enroll', assessmentRequired, enrollInCourse);
 
 // Get user's enrollments
-// GET /api/enrollments/my-courses
 router.get('/my-courses', getMyEnrollments);
 
 // Get continue learning data
-// GET /api/enrollments/continue-learning
 router.get('/continue-learning', getContinueLearning);
 
 // Check enrollment status for a course
-// GET /api/enrollments/check/:courseId
 router.get('/check/:courseId', checkEnrollmentStatus);
 
 // Get enrollment details for a specific course
-// GET /api/enrollments/course/:courseId
 router.get('/course/:courseId', getEnrollmentByCourse);
 
 // Get course progress
-// GET /api/enrollments/course/:courseId/progress
 router.get('/course/:courseId/progress', getCourseProgress);
 
 // Update current video position
-// PATCH /api/enrollments/course/:courseId/position
 router.patch('/course/:courseId/position', updateVideoPosition);
 
 // Mark video as complete
-// POST /api/enrollments/course/:courseId/video/:videoId/complete
 router.post('/course/:courseId/video/:videoId/complete', markVideoComplete);
 
 // Mark PDF as complete
-// POST /api/enrollments/course/:courseId/pdf/:pdfId/complete
 router.post('/course/:courseId/pdf/:pdfId/complete', markPdfComplete);
 
 // Unenroll from course
-// DELETE /api/enrollments/course/:courseId
 router.delete('/course/:courseId', unenrollFromCourse);
 
 export default router;
-

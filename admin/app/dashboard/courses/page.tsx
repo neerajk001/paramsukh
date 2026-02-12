@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api/client';
 import toast from 'react-hot-toast';
-import { Search, Plus, Edit, Trash2, Eye, Video, FolderOpen } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Eye, Video, FolderOpen, Users, Award, TrendingUp, BarChart3 } from 'lucide-react';
 import Image from 'next/image';
 import CourseModal from '@/components/CourseModal';
 
@@ -20,6 +20,12 @@ interface Course {
     tags: string[];
     status: string;
     videos?: any[];
+    totalVideos?: number;
+    totalPdfs?: number;
+    enrollmentCount?: number;
+    completionCount?: number;
+    averageRating?: number;
+    reviewCount?: number;
     createdAt: string;
 }
 
@@ -39,7 +45,27 @@ export default function CoursesPage() {
     const fetchCourses = async () => {
         try {
             const response = await apiClient.get('/api/courses/all');
-            setCourses(response.data.courses || []);
+            // Fetch enrollment stats to populate enrollment counts
+            const statsResponse = await apiClient.get('/api/enrollments/stats/courses').catch(() => null);
+            const coursesData = response.data.courses || [];
+            
+            // Merge enrollment stats into course data
+            if (statsResponse?.data?.courses) {
+                const enrollmentStatsMap = new Map(
+                    statsResponse.data.courses.map((stat: any) => [stat.courseId, stat])
+                );
+                const coursesWithStats = coursesData.map((course: Course) => {
+                    const stats = enrollmentStatsMap.get(course._id);
+                    return {
+                        ...course,
+                        enrollmentCount: stats?.enrollmentCount || 0,
+                        completionCount: stats?.completedCount || 0
+                    };
+                });
+                setCourses(coursesWithStats);
+            } else {
+                setCourses(coursesData);
+            }
         } catch (error: any) {
             // Only show error for server errors, not for empty data
             if (error.response?.status !== 404) {
@@ -184,12 +210,23 @@ export default function CoursesPage() {
                                 </div>
 
                                 <div className="flex items-center justify-between pt-4 border-t border-gray-100 text-sm">
-                                    <span className="font-medium text-secondary">
-                                        {course.duration} min
-                                    </span>
-                                    <span className="text-accent">
-                                        {course.videos?.length || 0} videos
-                                    </span>
+                                    <div className="flex flex-col gap-1">
+                                        <span className="font-medium text-secondary">
+                                            {course.duration} min
+                                        </span>
+                                        <span className="text-accent">
+                                            {course.totalVideos || course.videos?.length || 0} videos
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col gap-1 text-right">
+                                        <div className="flex items-center gap-1">
+                                            <Users className="w-4 h-4 text-green-600" />
+                                            <span className="font-medium text-green-600">
+                                                {course.enrollmentCount || 0}
+                                            </span>
+                                        </div>
+                                        <span className="text-gray-500 text-xs">enrolled</span>
+                                    </div>
                                 </div>
 
                                 <div className="flex items-center gap-2">

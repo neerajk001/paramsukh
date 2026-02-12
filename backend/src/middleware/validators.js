@@ -21,15 +21,15 @@ export const handleValidationErrors = (req, res, next) => {
  */
 export const validateSendOTP = [
   body('phone')
-    .matches(/^\+\d{10,15}$/)
-    .withMessage('Phone number must be a valid mobile number with country code (e.g. +919876543210)'),
+    .matches(/^(\+91)?[6-9]\d{9}$/)
+    .withMessage('Phone number must be a valid Indian mobile number (e.g., 9876543210 or +919876543210)'),
   handleValidationErrors
 ];
 
 export const validateVerifyOTP = [
   body('phone')
-    .matches(/^\+\d{10,15}$/)
-    .withMessage('Phone number must be a valid mobile number with country code (e.g. +919876543210)'),
+    .matches(/^(\+91)?[6-9]\d{9}$/)
+    .withMessage('Phone number must be a valid Indian mobile number (e.g., 9876543210 or +919876543210)'),
   body('otp')
     .isString()
     .trim()

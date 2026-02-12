@@ -1,19 +1,15 @@
 export default {
-
-  transform: {},
-  extensionsToTreatAsEsm: [],
   testEnvironment: 'node',
-  setupFilesAfterEnv: ['./jest.setup.js'],
+  preset: null,
+  transform: {},
+  moduleFileExtensions: ['js', 'mjs'],
   testMatch: ['**/tests/**/*.test.js'],
   collectCoverageFrom: [
     'src/**/*.js',
-    '!src/index.js',
-    '!src/config/admin.js',
-    '!src/**/*.test.js'
+    '!src/index.js'
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
-  moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '$1'
-  }
+  verbose: true,
+  testTimeout: 10000
 };

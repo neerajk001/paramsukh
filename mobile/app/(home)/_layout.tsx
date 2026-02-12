@@ -2,9 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs, useRouter } from 'expo-router';
 import { Platform, View, TouchableOpacity, Modal, ScrollView, Text, StyleSheet, Alert } from 'react-native';
 import { useState } from 'react';
+import * as Haptics from 'expo-haptics';
 import { useAuthStore } from '../../store/authStore';
 import axios from 'axios';
 import { API_URL } from '../../config/api';
+
+// Add profile screen to tabs
+
 
 export default function HomeLayout() {
   const [menuModalVisible, setMenuModalVisible] = useState(false);
@@ -24,18 +28,9 @@ export default function HomeLayout() {
           text: 'Sign Out',
           style: 'destructive',
           onPress: async () => {
-            try {
-              try {
-                await axios.post(`${API_URL}/auth/logout`, {}, { withCredentials: true });
-              } catch (error) {
-                console.log('Logout API call failed, but continuing with local signout');
-              }
-              await logout();
-              setMenuModalVisible(false);
-              router.replace('/signin');
-            } catch (error: any) {
-              Alert.alert('Error', 'Failed to sign out. Please try again.');
-            }
+            await logout();
+            setMenuModalVisible(false);
+            router.replace('/signin');
           }
         }
       ]
@@ -48,33 +43,39 @@ export default function HomeLayout() {
         screenOptions={{
           headerShown: false,
           tabBarActiveTintColor: '#FFFFFF',
-          tabBarInactiveTintColor: '#9CA3AF',
+          tabBarInactiveTintColor: '#8C7B73',
           tabBarStyle: {
-            backgroundColor: '#1F2937',
+            backgroundColor: 'rgba(44, 36, 32, 0.92)',
             borderTopWidth: 0,
-            height: Platform.OS === 'ios' ? 75 : 65,
-            paddingBottom: Platform.OS === 'ios' ? 25 : 12,
-            paddingTop: 6,
-            paddingHorizontal: 8,
+            height: Platform.OS === 'ios' ? 80 : 72,
+            paddingBottom: Platform.OS === 'ios' ? 28 : 16,
+            paddingTop: 12,
+            paddingHorizontal: 12,
             position: 'absolute',
             bottom: Platform.OS === 'android' ? 25 : 0,
             left: 0,
             right: 0,
-            marginLeft: 16,
-            marginRight: 16,
+            marginLeft: 20,
+            marginRight: 20,
             marginBottom: Platform.OS === 'android' ? 15 : 0,
             elevation: 0,
             shadowOpacity: 0,
-            borderRadius: 32,
+            borderRadius: 36,
+            shadowColor: '#F1842D',
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: 0.2,
+            shadowRadius: 24,
           },
           tabBarLabelStyle: {
-            fontSize: 9,
+            fontSize: 10,
             fontWeight: '600',
-            marginBottom: Platform.OS === 'android' ? 4 : 0,
+            marginBottom: Platform.OS === 'android' ? 6 : 0,
+            letterSpacing: 0.5,
+            textTransform: 'uppercase',
           },
           tabBarItemStyle: {
-            paddingVertical: 2,
-            marginHorizontal: 1,
+            paddingVertical: 4,
+            marginHorizontal: 2,
           },
         }}
       >
@@ -84,17 +85,12 @@ export default function HomeLayout() {
             title: 'Home',
             tabBarIcon: ({ color, focused }) => (
               <View
-                style={{
-                  backgroundColor: focused ? '#FFFFFF20' : 'transparent',
-                  borderRadius: 10,
-                  padding: 6,
-                  minWidth: 36,
-                  minHeight: 36,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
+                style={[
+                  styles.tabIconContainer,
+                  focused && styles.tabIconContainerActive
+                ]}
               >
-                <Ionicons name={focused ? 'home' : 'home-outline'} size={20} color={color} />
+                <Ionicons name={focused ? 'home' : 'home-outline'} size={22} color={focused ? '#FFFFFF' : color} />
               </View>
             ),
           }}
@@ -105,17 +101,12 @@ export default function HomeLayout() {
             title: 'Courses',
             tabBarIcon: ({ color, focused }) => (
               <View
-                style={{
-                  backgroundColor: focused ? '#FFFFFF20' : 'transparent',
-                  borderRadius: 10,
-                  padding: 6,
-                  minWidth: 36,
-                  minHeight: 36,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
+                style={[
+                  styles.tabIconContainer,
+                  focused && styles.tabIconContainerActive
+                ]}
               >
-                <Ionicons name={focused ? 'book' : 'book-outline'} size={20} color={color} />
+                <Ionicons name={focused ? 'book' : 'book-outline'} size={22} color={focused ? '#FFFFFF' : color} />
               </View>
             ),
           }}
@@ -126,17 +117,12 @@ export default function HomeLayout() {
             title: 'Events',
             tabBarIcon: ({ color, focused }) => (
               <View
-                style={{
-                  backgroundColor: focused ? '#FFFFFF20' : 'transparent',
-                  borderRadius: 10,
-                  padding: 6,
-                  minWidth: 36,
-                  minHeight: 36,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
+                style={[
+                  styles.tabIconContainer,
+                  focused && styles.tabIconContainerActive
+                ]}
               >
-                <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={20} color={color} />
+                <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={22} color={focused ? '#FFFFFF' : color} />
               </View>
             ),
           }}
@@ -147,19 +133,20 @@ export default function HomeLayout() {
             title: 'Membership',
             tabBarIcon: ({ color, focused }) => (
               <View
-                style={{
-                  backgroundColor: focused ? '#FFFFFF20' : 'transparent',
-                  borderRadius: 10,
-                  padding: 6,
-                  minWidth: 36,
-                  minHeight: 36,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
+                style={[
+                  styles.tabIconContainer,
+                  focused && styles.tabIconContainerActive
+                ]}
               >
-                <Ionicons name={focused ? 'card' : 'card-outline'} size={20} color={color} />
+                <Ionicons name={focused ? 'card' : 'card-outline'} size={22} color={focused ? '#FFFFFF' : color} />
               </View>
             ),
+          }}
+        />
+        <Tabs.Screen
+          name="profile-screen"
+          options={{
+            href: null, // Hide from tabs navigation
           }}
         />
         <Tabs.Screen
@@ -168,17 +155,12 @@ export default function HomeLayout() {
             title: 'Community',
             tabBarIcon: ({ color, focused }) => (
               <View
-                style={{
-                  backgroundColor: focused ? '#FFFFFF20' : 'transparent',
-                  borderRadius: 10,
-                  padding: 6,
-                  minWidth: 36,
-                  minHeight: 36,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
+                style={[
+                  styles.tabIconContainer,
+                  focused && styles.tabIconContainerActive
+                ]}
               >
-                <Ionicons name={focused ? 'people' : 'people-outline'} size={20} color={color} />
+                <Ionicons name={focused ? 'people' : 'people-outline'} size={22} color={focused ? '#FFFFFF' : color} />
               </View>
             ),
           }}
@@ -263,13 +245,14 @@ export default function HomeLayout() {
                   style={styles.menuItem}
                   onPress={() => {
                     setMenuModalVisible(false);
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     setTimeout(() => {
                       router.push('/shops');
                     }, 300);
                   }}
                 >
                   <View style={styles.menuItemContent}>
-                    <Text style={styles.menuEmoji}>�</Text>
+                    <Text style={styles.menuEmoji}>🛍️</Text>
                     <Text style={styles.menuText}>Shops</Text>
                   </View>
                   <Text style={styles.menuArrow}>›</Text>
@@ -279,6 +262,7 @@ export default function HomeLayout() {
                   style={styles.menuItem}
                   onPress={() => {
                     setMenuModalVisible(false);
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     setTimeout(() => {
                       router.push('/donations');
                     }, 300);
@@ -295,6 +279,7 @@ export default function HomeLayout() {
                   style={styles.menuItem}
                   onPress={() => {
                     setMenuModalVisible(false);
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     setTimeout(() => {
                       // @ts-ignore - Route will be available after restart
                       router.push('/(home)/podcasts');
@@ -317,104 +302,94 @@ export default function HomeLayout() {
 }
 
 const styles = StyleSheet.create({
+  tabIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabIconContainerActive: {
+    backgroundColor: 'rgba(241, 132, 45, 0.3)',
+    shadowColor: '#F1842D',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 3,
+  },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(44, 36, 32, 0.5)',
     justifyContent: 'flex-end',
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 20,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingHorizontal: 24,
     paddingBottom: Platform.OS === 'ios' ? 40 : 20,
     maxHeight: '85%',
+    shadowColor: '#F1842D',
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 16,
   },
   handleBar: {
     width: 40,
     height: 4,
-    backgroundColor: '#D1D5DB',
+    backgroundColor: '#F4F3EB',
     borderRadius: 2,
     alignSelf: 'center',
-    marginTop: 12,
-    marginBottom: 20,
-  },
-  accountSection: {
-    backgroundColor: '#EFF6FF',
-    borderRadius: 16,
-    padding: 20,
+    marginTop: 16,
     marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#DBEAFE',
-  },
-  accountTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  accountEmail: {
-    fontSize: 14,
-    color: '#6B7280',
   },
   modalHeader: {
     paddingBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: '#F4F3EB',
     marginBottom: 20,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#111827',
+    color: '#2C2420',
     textAlign: 'center',
+    letterSpacing: 0.25,
   },
   menuOptions: {
-    gap: 8,
+    gap: 12,
   },
   menuItem: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 16,
-    padding: 16,
+    borderColor: '#F4F3EB',
+    borderRadius: 20,
+    padding: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    shadowColor: '#5C4A42',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   menuItemContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   menuEmoji: {
-    fontSize: 20,
-    marginRight: 12,
+    fontSize: 22,
+    marginRight: 16,
   },
   menuText: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
-    color: '#111827',
+    color: '#2C2420',
   },
   menuArrow: {
-    fontSize: 20,
-    color: '#9CA3AF',
-  },
-  signOutButton: {
-    backgroundColor: '#EF4444',
-    paddingVertical: 16,
-    borderRadius: 16,
-    marginTop: 32,
-  },
-  signOutText: {
-    color: '#FFFFFF',
-    textAlign: 'center',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  versionText: {
-    color: '#9CA3AF',
-    textAlign: 'center',
-    fontSize: 12,
-    marginTop: 24,
+    fontSize: 24,
+    color: '#8C7B73',
   },
 });

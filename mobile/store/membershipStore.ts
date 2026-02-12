@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import axios from 'axios';
 import { API_URL } from '../config/api';
 import { useAuthStore } from './authStore';
+import apiClient from '../utils/apiClient';
 
 export interface MembershipPlan {
     id: string;
@@ -53,9 +54,7 @@ export const useMembershipStore = create<MembershipState>((set) => ({
                 return;
             }
 
-            const response = await axios.get(`${API_URL}/user/subscription`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await apiClient.get('/user/subscription');
 
             if (response.data && response.data.success) {
                 set({
@@ -68,12 +67,11 @@ export const useMembershipStore = create<MembershipState>((set) => ({
                 set({ isLoading: false, currentSubscription: null, error: null });
             }
         } catch (error: any) {
-            console.error('Fetch Subscription Error:', error);
-            if (error.response?.status === 401) {
-                // Handle 401 Unauthorized - logout user
-                useAuthStore.getState().logout();
+            // Silently handle subscription fetch errors
+            if (__DEV__) {
+                console.log('Subscription not available:', error.response?.status || 'Network error');
             }
-            // Don't show critical error, user might just be on free tier/not logged in properly yet
+            // Don't logout or show errors - user might be on free tier
             set({
                 isLoading: false,
                 currentSubscription: null,
@@ -91,11 +89,9 @@ export const useMembershipStore = create<MembershipState>((set) => ({
                 return false;
             }
 
-            const response = await axios.post(`${API_URL}/user/membership/purchase`, {
+            const response = await apiClient.post('/user/membership/purchase', {
                 plan: planId,
-                paymentId // For verification (test mode will accept any string)
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
+                paymentId
             });
 
             if (response.data.success) {

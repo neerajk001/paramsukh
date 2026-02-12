@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Image, Keyboard } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../store/authStore';
 
@@ -7,16 +7,13 @@ export default function SignInScreen() {
   const router = useRouter();
   const { sendOTP, verifyOTP, isLoading } = useAuthStore();
   const scrollViewRef = useRef<ScrollView>(null);
-  const nameInputRef = useRef<TextInput>(null);
   const otpInputRef = useRef<TextInput>(null);
 
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
-  const [displayName, setDisplayName] = useState('');
-  const [isNewUser, setIsNewUser] = useState(false);
-
+  const [generatedOTP, setGeneratedOTP] = useState<string | null>(null);
 
   const handleSendOTP = async () => {
     if (!phone || phone.length < 10) {
@@ -26,18 +23,34 @@ export default function SignInScreen() {
 
     const formattedPhone = phone.startsWith('+91') ? phone : `+91${phone}`;
 
-    // Call actual sendOTP from store
     const result = await sendOTP(formattedPhone);
 
     if (result.success) {
+      // Check if user is new - redirect to signup
+      if (result.isNewUser === true) {
+        Alert.alert(
+          'Account Not Found',
+          'This number is not registered. Please sign up first.',
+          [
+            {
+              text: 'Go to Sign Up',
+              onPress: () => router.replace('/signup')
+            },
+            {
+              text: 'Cancel',
+              style: 'cancel'
+            }
+          ]
+        );
+        return;
+      }
+
       setOtpSent(true);
-      // If backend tells us if user is new, we could use that, 
-      // but for now we'll rely on the verify step or default state
-      if (result.isNewUser !== undefined) {
-        setIsNewUser(result.isNewUser);
+      if (__DEV__ && result.otp) {
+        setGeneratedOTP(result.otp);
       }
       startResendTimer();
-      Alert.alert('Success', 'OTP sent to your phone number');
+      Alert.alert('Success', result.message || 'OTP sent to your phone number');
     } else {
       Alert.alert('Error', result.message || 'Failed to send OTP');
     }
@@ -49,18 +62,12 @@ export default function SignInScreen() {
       return;
     }
 
-    if (!displayName.trim()) {
-      Alert.alert('Error', 'Please enter your full name');
-      return;
-    }
-
     const formattedPhone = phone.startsWith('+91') ? phone : `+91${phone}`;
 
-    const result = await verifyOTP(formattedPhone, otp, displayName);
+    // For signin, we don't need name and email
+    const result = await verifyOTP(formattedPhone, otp);
 
     if (result.success) {
-      // After login, check assessment - if not completed, go to assessment screen
-      // The index.tsx will handle the routing based on assessment status
       router.replace('/');
     } else {
       Alert.alert('Error', result.message || 'Verification failed');
@@ -98,7 +105,6 @@ export default function SignInScreen() {
         nestedScrollEnabled={true}
         scrollEnabled={true}
       >
-        {/* Logo Section */}
         <View className="bg-white pt-16 pb-12 px-6 items-center">
           <Image
             source={require('../assets/paramsukh.png')}
@@ -112,7 +118,6 @@ export default function SignInScreen() {
         <View className="px-6 pt-8 pb-8">
           {!otpSent ? (
             <>
-              {/* Phone Input */}
               <View className="mb-5">
                 <Text className="text-gray-700 font-medium mb-2">Phone Number</Text>
                 <View className="flex-row items-center bg-white rounded-xl px-4 py-4 border border-gray-300 shadow-sm">
@@ -129,29 +134,10 @@ export default function SignInScreen() {
                 </View>
               </View>
 
-              {/* Full Name Input */}
-              <View className="mb-5">
-                <Text className="text-gray-700 font-medium mb-2">Full Name</Text>
-                <TextInput
-                  ref={nameInputRef}
-                  className="bg-white rounded-xl px-4 py-4 border border-gray-300 text-base shadow-sm"
-                  placeholder="Enter your full name"
-                  value={displayName}
-                  onChangeText={setDisplayName}
-                  autoCapitalize="words"
-                  placeholderTextColor="#9CA3AF"
-                  onFocus={() => {
-                    setTimeout(() => {
-                      scrollViewRef.current?.scrollToEnd({ animated: true });
-                    }, 300);
-                  }}
-                />
-              </View>
-
               <TouchableOpacity
                 className={`${isLoading ? 'bg-purple-400' : 'bg-purple-600'} rounded-xl py-4 shadow-md`}
                 onPress={handleSendOTP}
-                disabled={isLoading || phone.length < 10 || !displayName.trim()}
+                disabled={isLoading || phone.length < 10}
               >
                 {isLoading ? (
                   <ActivityIndicator color="#FFFFFF" />
@@ -160,14 +146,24 @@ export default function SignInScreen() {
                 )}
               </TouchableOpacity>
 
-              <Text className="text-gray-500 text-sm text-center mt-6">
-                We'll send you a 6-digit verification code
-              </Text>
+              <View className="mt-4 px-3 py-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <Text className="text-blue-700 text-xs text-center">
+                  ℹ️ For security, you can request OTP up to 3 times per 10 minutes
+                </Text>
+              </View>
+
+              <TouchableOpacity 
+                className="mt-6"
+                onPress={() => router.replace('/signup')}
+              >
+                <Text className="text-center text-gray-600">
+                  Don't have an account?{' '}
+                  <Text className="text-purple-600 font-semibold">Sign Up</Text>
+                </Text>
+              </TouchableOpacity>
             </>
           ) : (
             <>
-
-              {/* OTP Input */}
               <View className="mb-5">
                 <Text className="text-gray-700 font-medium mb-2">Enter OTP</Text>
                 <TextInput
@@ -180,11 +176,6 @@ export default function SignInScreen() {
                   maxLength={6}
                   autoFocus
                   placeholderTextColor="#D1D5DB"
-                  onFocus={() => {
-                    setTimeout(() => {
-                      scrollViewRef.current?.scrollToEnd({ animated: true });
-                    }, 300);
-                  }}
                 />
                 <Text className="text-gray-500 text-sm mt-2 text-center">
                   OTP sent to +91{phone}
@@ -200,7 +191,7 @@ export default function SignInScreen() {
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
                   <Text className="text-white font-semibold text-base text-center">
-                    {isNewUser ? 'Create Account' : 'Sign In'}
+                    Sign In
                   </Text>
                 )}
               </TouchableOpacity>
@@ -209,9 +200,18 @@ export default function SignInScreen() {
                 <TouchableOpacity onPress={() => {
                   setOtpSent(false);
                   setOtp('');
+                  setGeneratedOTP(null);
                 }}>
                   <Text className="text-purple-600 font-medium">← Change Number</Text>
                 </TouchableOpacity>
+
+                {__DEV__ && generatedOTP && (
+                  <TouchableOpacity onPress={() => {
+                    Alert.alert('Your OTP', generatedOTP);
+                  }}>
+                    <Text className="text-green-600 font-medium">View OTP</Text>
+                  </TouchableOpacity>
+                )}
 
                 {resendTimer > 0 ? (
                   <Text className="text-gray-500">Resend in {resendTimer}s</Text>
@@ -231,5 +231,3 @@ export default function SignInScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-

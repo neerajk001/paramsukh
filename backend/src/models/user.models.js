@@ -35,15 +35,7 @@ const userSchema = new mongoose.Schema({
     default: 'phone'
   },
   
-  // OTP rate limiting (only for phone auth)
-  phoneOTPAttempts: {           
-    type: Number,
-    default: 0
-  },                               
-  phoneOTPLastAttempt: {
-    type: Date,  
-    default: null
-  },                      
+                      
   
   // Subscription
   subscriptionPlan: {
@@ -151,19 +143,6 @@ userSchema.methods.updateLastLogin = function() {
   return this.save();
 };
   
-userSchema.methods.canRequestOTP = function() {
-  if (!this.phoneOTPLastAttempt) return true;
-    
-  const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
-  
-  if (this.phoneOTPLastAttempt < fifteenMinutesAgo) {
-    this.phoneOTPAttempts = 0; // Reset after 15 minutes
-    return true;
-  };          
-  
-  return this.phoneOTPAttempts < 3;
-}; 
-
 userSchema.methods.hasProAccess = function() {
   return ['bronze', 'copper', 'silver', 'gold2', 'gold1', 'diamond', 'patron', 'elite', 'quantum'].includes(this.subscriptionPlan) 
     && this.subscriptionStatus === 'active';

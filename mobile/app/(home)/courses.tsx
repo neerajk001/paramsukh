@@ -34,7 +34,7 @@ export default function CoursesScreen() {
           </View>
 
           {isLoading ? (
-            <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 20 }} />
+            <ActivityIndicator size="large" color="#EAB308" style={{ marginTop: 20 }} />
           ) : (
             courses.map((module) => (
               <View
@@ -89,55 +89,62 @@ export default function CoursesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#0F172A',
   },
   scrollContent: {
-    padding: 16,
+    padding: 20,
     paddingTop: 16,
-    paddingBottom: 100,
+    paddingBottom: 120,
   },
   sectionHeader: {
-    marginBottom: 20,
+    marginBottom: 24,
     paddingHorizontal: 4,
   },
   sectionTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '700',
-    color: '#111827',
-    marginBottom: 4,
+    color: '#F8FAFC',
+    marginBottom: 6,
+    letterSpacing: 0.3,
   },
   sectionSubtitle: {
-    fontSize: 14,
-    color: '#6B7280',
+    fontSize: 15,
+    color: '#94A3B8',
+    fontWeight: '500',
   },
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    backgroundColor: '#1E293B',
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(148, 163, 184, 0.15)',
     borderLeftWidth: 4,
-    marginBottom: 16,
+    marginBottom: 18,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
   },
   cardContent: {
-    padding: 16,
+    padding: 20,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
-    gap: 12,
+    marginBottom: 12,
+    gap: 14,
   },
   title: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#111827',
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#F8FAFC',
     flex: 1,
   },
   description: {
-    fontSize: 14,
-    color: '#6B7280',
-    lineHeight: 20,
-    marginBottom: 14,
+    fontSize: 15,
+    color: '#E2E8F0',
+    lineHeight: 22,
+    marginBottom: 16,
   },
   footerRow: {
     flexDirection: 'row',
@@ -147,27 +154,33 @@ const styles = StyleSheet.create({
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
   metaText: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: '#94A3B8',
+    fontWeight: '500',
   },
   metaDot: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: '#94A3B8',
   },
   viewButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 12,
+    gap: 8,
+    shadowColor: '#EAB308',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
   },
   viewButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
     color: '#FFFFFF',
   },
 });

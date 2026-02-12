@@ -12,7 +12,7 @@ export const getProfile = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    const user = await User.findById(userId).select('-phoneOTPAttempts -phoneOTPLastAttempt -__v');
+    const user = await User.findById(userId)    .select('-__v');
 
     if (!user) {
       return res.status(404).json({
@@ -76,7 +76,7 @@ export const updateProfile = async (req, res) => {
       userId,
       updateData,
       { new: true, runValidators: true }
-    ).select('-phoneOTPAttempts -phoneOTPLastAttempt -__v');
+    )    .select('-__v');
 
     if (!user) {
       return res.status(404).json({
@@ -126,7 +126,7 @@ export const updateProfilePhoto = async (req, res) => {
       userId,
       { photoURL },
       { new: true }
-    ).select('-phoneOTPAttempts -phoneOTPLastAttempt -__v');
+    )    .select('-__v');
 
     if (!user) {
       return res.status(404).json({
@@ -163,7 +163,7 @@ export const removeProfilePhoto = async (req, res) => {
       userId,
       { photoURL: null },
       { new: true }
-    ).select('-phoneOTPAttempts -phoneOTPLastAttempt -__v');
+    )    .select('-__v');
 
     if (!user) {
       return res.status(404).json({
@@ -456,16 +456,33 @@ export const purchaseMembership = async (req, res) => {
       });
     }
 
-    // Find courses by title
+    // Find courses by title (case-insensitive, trim whitespace)
+    const courseTitlePatterns = courseTitles.map(title => ({
+      $expr: { $eq: [{ $trim: [{ $toLower: '$title' }] }, title.toLowerCase().trim()] }
+    }));
+    
     const courses = await Course.find({
-      title: { $in: courseTitles },
+      $or: courseTitlePatterns,
       status: 'published'
     });
 
+    if (courses.length === 0) {
+      console.error(`❌ NO courses found for ${plan} plan. Looking for:`, courseTitles);
+      // List available published courses for debugging
+      const allPublishedCourses = await Course.find({ status: 'published' }).select('title').lean();
+      console.error('Available published courses:', allPublishedCourses.map(c => c.title));
+      return res.status(400).json({
+        success: false,
+        message: `No published courses found for ${plan} plan. Available courses: ${allPublishedCourses.map(c => c.title).join(', ') || 'None'}`
+      });
+    }
+
     if (courses.length !== courseTitles.length) {
       const foundTitles = courses.map(c => c.title);
-      const missingTitles = courseTitles.filter(t => !foundTitles.includes(t));
-      console.warn(`⚠️ Some courses not found for ${plan} plan:`, missingTitles);
+      const missingTitles = courseTitles.filter(t => !foundTitles.some(ft => ft.toLowerCase().trim() === t.toLowerCase().trim()));
+      console.warn(`⚠️ Some courses not found for ${plan} plan. Missing:`, missingTitles);
+      // Log what we found for debugging
+      console.log('Found courses:', courses.map(c => c.title));
     }
 
     // Update user subscription
@@ -543,7 +560,9 @@ export const purchaseMembership = async (req, res) => {
 
     const groups = await Promise.all(groupPromises);
 
-    console.log(`✅ User ${user.displayName} purchased ${plan} membership, enrolled in ${enrollments.length} course(s), and joined ${groups.length} community group(s)`);
+    console.log(`✅ User ${user.displayName} purchased ${plan} membership`);
+    console.log(`   - Created ${enrollments.length} enrollment(s) for courses: ${courses.map(c => c.title).join(', ')}`);
+    console.log(`   - Added to ${groups.length} community group(s): ${groups.map(g => g.name).join(', ')}`);
 
     return res.status(200).json({
       success: true,

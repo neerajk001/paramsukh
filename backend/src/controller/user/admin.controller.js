@@ -226,10 +226,23 @@ export const updateUserMembership = async (req, res) => {
       const courseTitles = MEMBERSHIP_COURSE_ACCESS[subscriptionPlan];
 
       if (courseTitles && courseTitles.length > 0) {
+        // Find courses by title (case-insensitive, trim whitespace)
+        const courseTitlePatterns = courseTitles.map(title => ({
+          $expr: { $eq: [{ $trim: [{ $toLower: '$title' }] }, title.toLowerCase().trim()] }
+        }));
+        
         const courses = await Course.find({
-          title: { $in: courseTitles },
+          $or: courseTitlePatterns,
           status: 'published'
         });
+
+        if (courses.length === 0) {
+          console.warn(`⚠️ No courses found for ${subscriptionPlan} plan. Looking for:`, courseTitles);
+        } else if (courses.length !== courseTitles.length) {
+          const foundTitles = courses.map(c => c.title);
+          const missingTitles = courseTitles.filter(t => !foundTitles.some(ft => ft.toLowerCase().trim() === t.toLowerCase().trim()));
+          console.warn(`⚠️ Some courses not found for ${subscriptionPlan} plan. Missing:`, missingTitles);
+        }
 
         // Enroll in courses
         for (const course of courses) {
@@ -247,6 +260,9 @@ export const updateUserMembership = async (req, res) => {
 
             course.enrollmentCount += 1;
             await course.save();
+            console.log(`✅ Enrolled user ${id} in course: ${course.title}`);
+          } else {
+            console.log(`ℹ️ User ${id} already enrolled in: ${course.title}`);
           }
         }
 
@@ -281,7 +297,7 @@ export const updateUserMembership = async (req, res) => {
           }
         }
 
-        console.log(`✅ Admin updated membership for user ${id}: ${subscriptionPlan} (auto-enrolled)`);
+        console.log(`✅ Admin updated membership for user ${id}: ${subscriptionPlan} (auto-enrolled in ${courses.length} courses)`);
       }
     } else {
       console.log(`✅ Admin updated membership for user ${id}: ${subscriptionPlan}`);

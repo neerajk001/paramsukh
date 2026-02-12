@@ -59,17 +59,43 @@ export const paymentLimiter = rateLimit({
 });
 
 /**
- * OTP rate limiter - 3 OTP requests per 10 minutes per IP
+ * OTP rate limiter - 3 OTP requests per 10 minutes per phone/IP (production)
+ * or 10 requests per 10 minutes (development)
+ * Uses phone number from request body or falls back to IP
  */
 export const otpLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 3,
+  max: process.env.NODE_ENV === 'production' ? 3 : 10, // More lenient in dev
   message: {
     success: false,
-    message: 'Too many OTP requests. Please try again after 10 minutes.'
+    message: process.env.NODE_ENV === 'production' 
+      ? 'Too many OTP requests. Please try again after 10 minutes.'
+      : 'Rate limit reached. Please wait a moment before trying again.'
   },
   standardHeaders: true,
   legacyHeaders: false,
+  // Use phone number if available, otherwise fall back to IP
+  keyGenerator: (req) => {
+    // Use phone number from request body for more accurate rate limiting
+    const phone = req.body?.phone;
+    if (phone) {
+      return `otp:${phone}`;
+    }
+    // Fallback to IP address
+    return `otp:${req.ip}`;
+  },
+  // Log rate limit hits in development
+  handler: (req, res) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`⚠️  Rate limit hit for: ${req.body?.phone || req.ip}`);
+    }
+    res.status(429).json({
+      success: false,
+      message: process.env.NODE_ENV === 'production' 
+        ? 'Too many OTP requests. Please try again after 10 minutes.'
+        : 'Rate limit reached. Please wait a moment before trying again.'
+    });
+  }
 });
 
 /**

@@ -119,10 +119,15 @@ export const COURSE_LIMITS = {
 
 // Course access mapping per membership plan
 // Maps membership plan to course titles that should be auto-enrolled
-// Note: Course titles must match exactly with the Course model titles
+// Note: Course titles are matched case-insensitively (trimmed) with Course model titles
 export const MEMBERSHIP_COURSE_ACCESS = {
   bronze: ['Physical Wellness'],
   copper: ['Physical Wellness', 'Spirituality & Mantra Yoga', 'Mental Wellness'],
   silver: ['Physical Wellness', 'Mental Wellness', 'Financial Wellness', 'Relationship & Family Wellness', 'Spirituality & Mantra Yoga']
+};
+
+// Helper function to normalize course title for matching
+export const normalizeCourseTitle = (title) => {
+  return title ? title.toLowerCase().trim() : '';
 };
 

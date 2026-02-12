@@ -109,7 +109,10 @@ export const useCourseStore = create<CourseState>((set) => ({
                 set({ courses: [], isLoading: false });
             }
         } catch (error: any) {
-            console.error('Fetch Courses Error:', error);
+            // Silently fail - don't show errors to user if courses aren't available
+            if (__DEV__) {
+                console.log('Courses not available:', error.response?.status || 'Network error');
+            }
             set({ isLoading: false, courses: [], error: null });
         }
     },

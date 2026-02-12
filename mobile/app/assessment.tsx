@@ -15,6 +15,8 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../store/authStore';
+import axios from 'axios';
+import { API_URL } from '../config/api';
 
 export default function AssessmentScreen() {
   const router = useRouter();
@@ -50,28 +52,18 @@ export default function AssessmentScreen() {
       options: ['Yes', 'No'],
     },
     {
-      id: 'emotional_issue',
-      question: 'Do you have any Emotional Issues?',
-      options: ['Yes', 'No'],
-    },
-    {
-      id: 'intellectual_issue',
-      question: 'Do you have any Intellectual Issues?',
-      options: ['Yes', 'No'],
-    },
-    {
       id: 'financial_issue',
       question: 'Do you have any Financial Issues?',
       options: ['Yes', 'No'],
     },
     {
-      id: 'social_issue',
-      question: 'Do you have any Social Issues?',
+      id: 'emotional_issue',
+      question: 'Do you have any Mental Health Issues?',
       options: ['Yes', 'No'],
     },
     {
       id: 'spiritual_issue',
-      question: 'Do you have any Spiritual Issues?',
+      question: 'Do you have any Spiritual Growth Interests?',
       options: ['Yes', 'No'],
     },
   ];
@@ -105,20 +97,57 @@ export default function AssessmentScreen() {
     setIsSubmitting(true);
     
     try {
-      const allAnswers = { ...answers, ...textInputs };
-      
-      // Save assessment completion
-      await AsyncStorage.setItem('assessment_completed', 'true');
-      await AsyncStorage.setItem('assessment_answers', JSON.stringify(allAnswers));
-      
-      // Small delay for better UX
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Navigate to home
-      router.replace('/(home)/menu');
-    } catch (error) {
-      console.error('Error saving assessment:', error);
-      Alert.alert('Error', 'Failed to save assessment. Please try again.');
+      // Get token from AsyncStorage
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found. Please sign in again.');
+      }
+
+      // Prepare assessment data for API
+      const assessmentData = {
+        age: parseInt(textInputs.age),
+        occupation: textInputs.occupation,
+        location: textInputs.location,
+        physicalIssue: answers.physical_issue === 'Yes',
+        physicalIssueDetails: '',
+        specialDiseaseIssue: answers.special_disease_issue === 'Yes',
+        specialDiseaseDetails: '',
+        relationshipIssue: answers.relationship_issue === 'Yes',
+        relationshipIssueDetails: '',
+        financialIssue: answers.financial_issue === 'Yes',
+        financialIssueDetails: '',
+        mentalHealthIssue: answers.emotional_issue === 'Yes',
+        mentalHealthIssueDetails: '',
+        spiritualGrowth: answers.spiritual_issue === 'Yes',
+        spiritualGrowthDetails: ''
+      };
+
+      // Submit to backend API
+      const response = await axios.post(`${API_URL}/assessment/submit`, assessmentData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data.success) {
+        // Save assessment completion locally
+        await AsyncStorage.setItem('assessment_completed', 'true');
+        const allAnswers = { ...answers, ...textInputs };
+        await AsyncStorage.setItem('assessment_answers', JSON.stringify(allAnswers));
+        
+        // Small delay for better UX
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Navigate to home
+        router.replace('/(home)/menu');
+      } else {
+        throw new Error(response.data.message || 'Failed to submit assessment');
+      }
+    } catch (error: any) {
+      console.error('Error submitting assessment:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to submit assessment. Please try again.';
+      Alert.alert('Error', errorMsg);
       setIsSubmitting(false);
     }
   };

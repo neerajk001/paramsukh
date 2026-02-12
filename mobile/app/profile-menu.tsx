@@ -73,20 +73,14 @@ export default function ProfileMenuScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              // Call backend logout
-              try {
-                await axios.post(`${API_URL}/logout`, {}, { withCredentials: true });
-              } catch (error) {
-                console.log('Backend logout failed, continuing with local logout');
-              }
-              
-              // Clear local storage and state
+              // Clear local storage and state (this now calls backend internally)
               await logout();
               
               // Navigate to signin
               router.replace('/signin');
-            } catch (error) {
-              Alert.alert('Error', 'Failed to sign out. Please try again.');
+            } catch (error: any) {
+              const errorMsg = error.response?.data?.message || 'Failed to sign out from server. Please check your connection and try again.';
+              Alert.alert('Sign Out Failed', errorMsg);
             }
           }
         }

@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
                             
 export default function Home() {
   const router = useRouter();
-  const { user, isLoading, loadUser } = useAuthStore();
+  const { user, isLoading, loadUser, fetchCurrentUser } = useAuthStore();
   const [hasChecked, setHasChecked] = useState(false);
 
   useEffect(() => {
@@ -15,22 +15,33 @@ export default function Home() {
 
     const checkAuthAndAssessment = async () => {
       try {
-        // First, try to load user from storage
+        // First, try to load user from storage (fast initial load)
         await loadUser();
 
         // Small delay to ensure state is updated
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 100));
 
         if (!isMounted) return;
 
         // Get the current user state after loading
         const currentUser = useAuthStore.getState().user;
+        const currentToken = useAuthStore.getState().token;
 
         // If no user, redirect to signin
         if (!currentUser) {
           setHasChecked(true);
           router.replace('/signin');
           return;
+        }
+
+        // If we have a token, fetch fresh user data from server
+        if (currentToken) {
+          await fetchCurrentUser();
+          
+          // Small delay to ensure state is updated
+          await new Promise(resolve => setTimeout(resolve, 50));
+          
+          if (!isMounted) return;
         }
 
         // Check if assessment is completed
@@ -71,7 +82,7 @@ export default function Home() {
       isMounted = false;
       clearTimeout(timeoutId);
     };
-  }, [router, hasChecked, loadUser]);
+  }, [router, hasChecked, loadUser, fetchCurrentUser]);
 
   // Show loading screen while checking
   if (!hasChecked) {

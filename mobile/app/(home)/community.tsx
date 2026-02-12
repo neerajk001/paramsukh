@@ -366,12 +366,11 @@ export default function CommunityScreen() {
               currentView === 'feed' && styles.sidebarItemActive,
             ]}
             onPress={() => handleViewChange('feed')}
-          >
-            <Ionicons
-              name="home"
-              size={24}
-              color={currentView === 'feed' ? '#3B82F6' : '#6B7280'}
-            />
+          >              <Ionicons
+                name="home"
+                size={24}
+                color={currentView === 'feed' ? '#F1842D' : '#5C4A42'}
+              />
             <Text
               style={[
                 styles.sidebarItemText,
@@ -395,7 +394,7 @@ export default function CommunityScreen() {
               <Ionicons
                 name="people"
                 size={24}
-                color={currentView === 'groups' ? '#3B82F6' : '#6B7280'}
+                color={currentView === 'groups' ? '#F1842D' : '#5C4A42'}
               />
               <Text
                 style={[
@@ -409,19 +408,19 @@ export default function CommunityScreen() {
 
             {/* Render Actual Groups List in Sidebar if expanded or separate section */}
             {groups.length > 0 && (
-              <View style={{ marginLeft: 20, marginTop: 5 }}>
+              <View style={{ marginLeft: 20, marginTop: 8 }}>
                 {groups.map(g => (
                   <TouchableOpacity
                     key={g._id}
-                    style={{ paddingVertical: 8, flexDirection: 'row', alignItems: 'center' }}
+                    style={{ paddingVertical: 10, flexDirection: 'row', alignItems: 'center' }}
                     onPress={() => {
                       setActiveGroup(g);
                       setCurrentView('feed');
                       setShowSidebar(false);
                     }}
                   >
-                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: activeGroup?._id === g._id ? '#3B82F6' : '#E5E7EB', marginRight: 10 }} />
-                    <Text style={{ fontSize: 13, color: activeGroup?._id === g._id ? '#1F2937' : '#6B7280' }} numberOfLines={1}>
+                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: activeGroup?._id === g._id ? '#F1842D' : 'rgba(92, 74, 66, 0.12)', marginRight: 12 }} />
+                    <Text style={{ fontSize: 14, color: activeGroup?._id === g._id ? '#2C2420' : '#5C4A42', fontWeight: activeGroup?._id === g._id ? '600' : '500' }} numberOfLines={1}>
                       {g.name}
                     </Text>
                   </TouchableOpacity>
@@ -439,7 +438,7 @@ export default function CommunityScreen() {
               <Ionicons
                 name="chatbubbles"
                 size={24}
-                color={currentView === 'message' ? '#3B82F6' : '#6B7280'}
+                color={currentView === 'message' ? '#F1842D' : '#5C4A42'}
               />
               <Text
                 style={[
@@ -462,9 +461,8 @@ export default function CommunityScreen() {
             onPress={() => setShowAssessment(true)}
             activeOpacity={0.8}
           >
-            <View style={styles.bannerContent}>
-              <View style={styles.bannerIconContainer}>
-                <Ionicons name="clipboard-outline" size={24} color="#3B82F6" />
+            <View style={styles.bannerContent}>                <View style={styles.bannerIconContainer}>
+                <Ionicons name="clipboard-outline" size={24} color="#F1842D" />
               </View>
               <View style={styles.bannerTextContainer}>
                 <Text style={styles.bannerTitle}>Complete Your Assessment</Text>
@@ -516,10 +514,9 @@ export default function CommunityScreen() {
             onPress={() => setShowCreatePost(true)}
             activeOpacity={0.8}
           >
-            <View style={styles.createPostContent}>
-              <Ionicons name="add-circle" size={24} color="#3B82F6" />
+            <View style={styles.createPostContent}>                <Ionicons name="add-circle" size={24} color="#F1842D" />
               <Text style={styles.createPostText}>
-                {activeGroup ? `Share in ${activeGroup.name}...` : 'Select a group to post...'}
+                {activeGroup && activeGroup.name ? `Share in ${activeGroup.name}...` : 'Select a group to post...'}
               </Text>
             </View>
             <View style={styles.mediaIcons}>
@@ -534,7 +531,9 @@ export default function CommunityScreen() {
           <>
             {/* Posts Feed */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>{activeGroup ? `${activeGroup.name} Posts` : 'Community Posts'}</Text>
+              <Text style={styles.sectionTitle}>
+                {activeGroup && activeGroup.name ? `${activeGroup.name} Posts` : 'Community Posts'}
+              </Text>
 
               {!activeGroup && groups.length === 0 && !isStoreLoading && (
                 <View style={styles.emptyState}>
@@ -543,7 +542,7 @@ export default function CommunityScreen() {
               )}
 
               {isStoreLoading ? (
-                <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 20 }} />
+                <ActivityIndicator size="large" color="#F1842D" style={{ marginTop: 20 }} />
               ) : (
                 getFilteredPosts().map((post) => (
                   <View key={post._id} style={styles.postCard}>
@@ -632,11 +631,11 @@ export default function CommunityScreen() {
                     setCurrentView('feed');
                   }}
                 >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16 }}>
-                    <View style={{ width: 50, height: 50, borderRadius: 8, backgroundColor: '#E5E7EB', marginRight: 16 }} />
+                  <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20 }}>
+                    <View style={{ width: 50, height: 50, borderRadius: 12, backgroundColor: 'rgba(92, 74, 66, 0.08)', marginRight: 16 }} />
                     <View>
-                      <Text style={{ fontSize: 16, fontWeight: '600', color: '#111827' }}>{g.name}</Text>
-                      <Text style={{ fontSize: 13, color: '#6B7280' }}>{g.memberCount} members</Text>
+                      <Text style={{ fontSize: 17, fontWeight: '700', color: '#2C2420' }}>{g.name}</Text>
+                      <Text style={{ fontSize: 14, color: '#5C4A42', fontWeight: '500' }}>{g.memberCount} members</Text>
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -712,7 +711,7 @@ export default function CommunityScreen() {
                 style={styles.mediaButton}
                 onPress={handlePickImage}
               >
-                <Ionicons name="image-outline" size={24} color="#3B82F6" />
+                <Ionicons name="image-outline" size={24} color="#F1842D" />
                 <Text style={styles.mediaButtonText}>Photo</Text>
               </TouchableOpacity>
 
@@ -720,7 +719,7 @@ export default function CommunityScreen() {
                 style={styles.mediaButton}
                 onPress={handlePickVideo}
               >
-                <Ionicons name="videocam-outline" size={24} color="#3B82F6" />
+                <Ionicons name="videocam-outline" size={24} color="#F1842D" />
                 <Text style={styles.mediaButtonText}>Video</Text>
               </TouchableOpacity>
             </View>
@@ -767,11 +766,9 @@ export default function CommunityScreen() {
                   selectedPostFilter === 'all' && styles.filterOptionActive
                 ]}
                 onPress={() => handlePostFilterSelect('all')}
-              >
-                <Ionicons
-                  name="grid-outline"
+              >                <Ionicons name="grid-outline"
                   size={24}
-                  color={selectedPostFilter === 'all' ? '#3B82F6' : '#6B7280'}
+                  color={selectedPostFilter === 'all' ? '#F1842D' : '#5C4A42'}
                 />
                 <Text
                   style={[
@@ -782,7 +779,7 @@ export default function CommunityScreen() {
                   All Posts
                 </Text>
                 {selectedPostFilter === 'all' && (
-                  <Ionicons name="checkmark-circle" size={20} color="#3B82F6" />
+                  <Ionicons name="checkmark-circle" size={20} color="#F1842D" />
                 )}
               </TouchableOpacity>
 
@@ -796,7 +793,7 @@ export default function CommunityScreen() {
                 <Ionicons
                   name="image-outline"
                   size={24}
-                  color={selectedPostFilter === 'image' ? '#3B82F6' : '#6B7280'}
+                  color={selectedPostFilter === 'image' ? '#F1842D' : '#5C4A42'}
                 />
                 <Text
                   style={[
@@ -807,7 +804,7 @@ export default function CommunityScreen() {
                   Image
                 </Text>
                 {selectedPostFilter === 'image' && (
-                  <Ionicons name="checkmark-circle" size={20} color="#3B82F6" />
+                  <Ionicons name="checkmark-circle" size={20} color="#F1842D" />
                 )}
               </TouchableOpacity>
 
@@ -821,7 +818,7 @@ export default function CommunityScreen() {
                 <Ionicons
                   name="videocam-outline"
                   size={24}
-                  color={selectedPostFilter === 'video' ? '#3B82F6' : '#6B7280'}
+                  color={selectedPostFilter === 'video' ? '#F1842D' : '#5C4A42'}
                 />
                 <Text
                   style={[
@@ -832,7 +829,7 @@ export default function CommunityScreen() {
                   Video
                 </Text>
                 {selectedPostFilter === 'video' && (
-                  <Ionicons name="checkmark-circle" size={20} color="#3B82F6" />
+                  <Ionicons name="checkmark-circle" size={20} color="#F1842D" />
                 )}
               </TouchableOpacity>
 
@@ -846,7 +843,7 @@ export default function CommunityScreen() {
                 <Ionicons
                   name="musical-notes-outline"
                   size={24}
-                  color={selectedPostFilter === 'audio' ? '#3B82F6' : '#6B7280'}
+                  color={selectedPostFilter === 'audio' ? '#F1842D' : '#5C4A42'}
                 />
                 <Text
                   style={[
@@ -857,7 +854,7 @@ export default function CommunityScreen() {
                   Audio
                 </Text>
                 {selectedPostFilter === 'audio' && (
-                  <Ionicons name="checkmark-circle" size={20} color="#3B82F6" />
+                  <Ionicons name="checkmark-circle" size={20} color="#F1842D" />
                 )}
               </TouchableOpacity>
 
@@ -871,7 +868,7 @@ export default function CommunityScreen() {
                 <Ionicons
                   name="document-text-outline"
                   size={24}
-                  color={selectedPostFilter === 'text' ? '#3B82F6' : '#6B7280'}
+                  color={selectedPostFilter === 'text' ? '#F1842D' : '#5C4A42'}
                 />
                 <Text
                   style={[
@@ -882,7 +879,7 @@ export default function CommunityScreen() {
                   Text
                 </Text>
                 {selectedPostFilter === 'text' && (
-                  <Ionicons name="checkmark-circle" size={20} color="#3B82F6" />
+                  <Ionicons name="checkmark-circle" size={20} color="#F1842D" />
                 )}
               </TouchableOpacity>
             </View>
@@ -925,7 +922,7 @@ export default function CommunityScreen() {
                 <Ionicons
                   name="pricetags-outline"
                   size={24}
-                  color={selectedTag === 'all' ? '#3B82F6' : '#6B7280'}
+                  color={selectedTag === 'all' ? '#F1842D' : '#5C4A42'}
                 />
                 <Text
                   style={[
@@ -936,7 +933,7 @@ export default function CommunityScreen() {
                   All Tags
                 </Text>
                 {selectedTag === 'all' && (
-                  <Ionicons name="checkmark-circle" size={20} color="#3B82F6" />
+                  <Ionicons name="checkmark-circle" size={20} color="#F1842D" />
                 )}
               </TouchableOpacity>
 
@@ -953,7 +950,7 @@ export default function CommunityScreen() {
                 <Ionicons
                   name="sparkles-outline"
                   size={24}
-                  color={selectedTag === 'meditation' ? '#3B82F6' : '#6B7280'}
+                  color={selectedTag === 'meditation' ? '#F1842D' : '#5C4A42'}
                 />
                 <Text
                   style={[
@@ -964,7 +961,7 @@ export default function CommunityScreen() {
                   Meditation
                 </Text>
                 {selectedTag === 'meditation' && (
-                  <Ionicons name="checkmark-circle" size={20} color="#3B82F6" />
+                  <Ionicons name="checkmark-circle" size={20} color="#F1842D" />
                 )}
               </TouchableOpacity>
 
@@ -981,7 +978,7 @@ export default function CommunityScreen() {
                 <Ionicons
                   name="flower-outline"
                   size={24}
-                  color={selectedTag === 'spiritual' ? '#3B82F6' : '#6B7280'}
+                  color={selectedTag === 'spiritual' ? '#F1842D' : '#5C4A42'}
                 />
                 <Text
                   style={[
@@ -992,7 +989,7 @@ export default function CommunityScreen() {
                   Spiritual
                 </Text>
                 {selectedTag === 'spiritual' && (
-                  <Ionicons name="checkmark-circle" size={20} color="#3B82F6" />
+                  <Ionicons name="checkmark-circle" size={20} color="#F1842D" />
                 )}
               </TouchableOpacity>
 
@@ -1009,7 +1006,7 @@ export default function CommunityScreen() {
                 <Ionicons
                   name="fitness-outline"
                   size={24}
-                  color={selectedTag === 'wellness' ? '#3B82F6' : '#6B7280'}
+                  color={selectedTag === 'wellness' ? '#F1842D' : '#5C4A42'}
                 />
                 <Text
                   style={[
@@ -1020,7 +1017,7 @@ export default function CommunityScreen() {
                   Wellness
                 </Text>
                 {selectedTag === 'wellness' && (
-                  <Ionicons name="checkmark-circle" size={20} color="#3B82F6" />
+                  <Ionicons name="checkmark-circle" size={20} color="#F1842D" />
                 )}
               </TouchableOpacity>
 
@@ -1037,7 +1034,7 @@ export default function CommunityScreen() {
                 <Ionicons
                   name="book-outline"
                   size={24}
-                  color={selectedTag === 'learning' ? '#3B82F6' : '#6B7280'}
+                  color={selectedTag === 'learning' ? '#F1842D' : '#5C4A42'}
                 />
                 <Text
                   style={[
@@ -1048,7 +1045,7 @@ export default function CommunityScreen() {
                   Learning
                 </Text>
                 {selectedTag === 'learning' && (
-                  <Ionicons name="checkmark-circle" size={20} color="#3B82F6" />
+                  <Ionicons name="checkmark-circle" size={20} color="#F1842D" />
                 )}
               </TouchableOpacity>
 
@@ -1065,7 +1062,7 @@ export default function CommunityScreen() {
                 <Ionicons
                   name="people-outline"
                   size={24}
-                  color={selectedTag === 'community' ? '#3B82F6' : '#6B7280'}
+                  color={selectedTag === 'community' ? '#F1842D' : '#5C4A42'}
                 />
                 <Text
                   style={[
@@ -1076,7 +1073,7 @@ export default function CommunityScreen() {
                   Community
                 </Text>
                 {selectedTag === 'community' && (
-                  <Ionicons name="checkmark-circle" size={20} color="#3B82F6" />
+                  <Ionicons name="checkmark-circle" size={20} color="#F1842D" />
                 )}
               </TouchableOpacity>
             </View>
@@ -1100,7 +1097,7 @@ export default function CommunityScreen() {
               onPress={() => handlePostTypeSelection('feed')}
             >
               <View style={styles.postTypeOptionIcon}>
-                <Ionicons name="home" size={24} color="#3B82F6" />
+                <Ionicons name="home" size={24} color="#F1842D" />
               </View>
               <View style={styles.postTypeOptionContent}>
                 <Text style={styles.postTypeOptionTitle}>Post on Feed</Text>
@@ -1116,7 +1113,7 @@ export default function CommunityScreen() {
               onPress={() => handlePostTypeSelection('channel')}
             >
               <View style={styles.postTypeOptionIcon}>
-                <Ionicons name="chatbubbles" size={24} color="#3B82F6" />
+                <Ionicons name="chatbubbles" size={24} color="#F1842D" />
               </View>
               <View style={styles.postTypeOptionContent}>
                 <Text style={styles.postTypeOptionTitle}>Post in Channel</Text>
@@ -1150,15 +1147,20 @@ export default function CommunityScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#FDF8F3',
   },
   customHeader: {
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: 'rgba(92, 74, 66, 0.06)',
     paddingTop: Platform.OS === 'ios' ? 10 : 16,
     paddingHorizontal: 20,
     paddingBottom: 16,
+    shadowColor: '#5C4A42',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   headerContent: {
     flexDirection: 'row',
@@ -1176,19 +1178,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#2C2420',
+    letterSpacing: 0.3,
   },
   headerSubtitle: {
-    fontSize: 14,
-    color: '#6B7280',
+    fontSize: 15,
+    color: '#5C4A42',
     marginTop: 2,
+    fontWeight: '500',
   },
   headerRightButtons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
   },
   notificationButton: {
     padding: 4,
@@ -1197,7 +1201,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(255, 254, 249, 0.8)',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -1206,7 +1210,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    backgroundColor: '#EF4444',
+    backgroundColor: '#F1842D',
     borderRadius: 10,
     minWidth: 18,
     height: 18,
@@ -1226,16 +1230,21 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#DBEAFE',
+    backgroundColor: 'rgba(253, 186, 116, 0.25)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#3B82F6',
+    borderColor: '#F1842D',
+    shadowColor: '#F1842D',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
   },
   profileIconText: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#3B82F6',
+    color: '#F1842D',
   },
   sidebarOverlay: {
     position: 'absolute',
@@ -1243,7 +1252,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(44, 36, 32, 0.5)',
     zIndex: 998,
   },
   sidebar: {
@@ -1254,10 +1263,10 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#FFFFFF',
     zIndex: 999,
-    shadowColor: '#000',
-    shadowOffset: { width: 2, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
+    shadowColor: '#2C2420',
+    shadowOffset: { width: 4, height: 0 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
     elevation: 10,
   },
   sidebarHeader: {
@@ -1267,104 +1276,112 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: Platform.OS === 'ios' ? 60 : 50,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: 'rgba(92, 74, 66, 0.06)',
   },
   sidebarTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#111827',
+    color: '#2C2420',
+    letterSpacing: 0.5,
   },
   sidebarContent: {
     paddingTop: 20,
   },
   sidebarSection: {
-    marginTop: 20,
+    marginTop: 24,
     paddingHorizontal: 20,
   },
   sidebarSectionTitle: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#9CA3AF',
+    color: '#8C7B73',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
     marginBottom: 12,
   },
   sidebarItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: 18,
     paddingHorizontal: 20,
     gap: 16,
   },
   sidebarItemActive: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: 'rgba(241, 132, 45, 0.1)',
     borderLeftWidth: 4,
-    borderLeftColor: '#3B82F6',
+    borderLeftColor: '#F1842D',
   },
   sidebarItemText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#6B7280',
+    color: '#5C4A42',
   },
   sidebarItemTextActive: {
-    color: '#3B82F6',
+    color: '#F1842D',
     fontWeight: '600',
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
+    paddingVertical: 80,
     paddingHorizontal: 40,
   },
   emptyStateText: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
+    fontWeight: '700',
+    color: '#2C2420',
     marginTop: 16,
     marginBottom: 8,
+    letterSpacing: 0.3,
   },
   emptyStateSubtext: {
-    fontSize: 14,
-    color: '#6B7280',
+    fontSize: 15,
+    color: '#5C4A42',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,
   },
   postTypeModalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(44, 36, 32, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   postTypeModalContent: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 24,
     padding: 24,
     width: '100%',
     maxWidth: 400,
+    shadowColor: '#2C2420',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 8,
   },
   postTypeModalTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#111827',
+    color: '#2C2420',
     marginBottom: 24,
     textAlign: 'center',
+    letterSpacing: 0.3,
   },
   postTypeOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: '#F9FAFB',
+    padding: 18,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 254, 249, 0.8)',
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(92, 74, 66, 0.08)',
   },
   postTypeOptionIcon: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: 'rgba(241, 132, 45, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
@@ -1373,14 +1390,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   postTypeOptionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#2C2420',
     marginBottom: 4,
   },
   postTypeOptionDescription: {
     fontSize: 14,
-    color: '#6B7280',
+    color: '#5C4A42',
+    fontWeight: '500',
   },
   postTypeCancelButton: {
     marginTop: 12,
@@ -1431,17 +1449,17 @@ const styles = StyleSheet.create({
   },
   createPostButton: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: 16,
     marginHorizontal: 20,
     marginTop: 16,
     marginBottom: 20,
-    padding: 16,
+    padding: 18,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    borderColor: 'rgba(92, 74, 66, 0.08)',
+    shadowColor: '#5C4A42',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
     elevation: 2,
   },
   createPostContent: {
@@ -1452,44 +1470,46 @@ const styles = StyleSheet.create({
   createPostText: {
     flex: 1,
     fontSize: 15,
-    color: '#6B7280',
+    color: '#5C4A42',
     marginLeft: 12,
+    fontWeight: '500',
   },
   mediaIcons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+    borderTopColor: 'rgba(92, 74, 66, 0.06)',
   },
   section: {
     paddingHorizontal: 20,
     marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: '700',
-    color: '#111827',
+    color: '#2C2420',
     marginBottom: 16,
+    letterSpacing: 0.3,
   },
   postCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 18,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    borderColor: 'rgba(92, 74, 66, 0.08)',
+    shadowColor: '#5C4A42',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 3,
   },
   postHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
   },
   userInfo: {
     flexDirection: 'row',
@@ -1499,7 +1519,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(255, 254, 249, 0.8)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -1508,43 +1528,45 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   userName: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#111827',
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#2C2420',
   },
   postTime: {
-    fontSize: 12,
-    color: '#9CA3AF',
+    fontSize: 13,
+    color: '#8C7B73',
     marginTop: 2,
+    fontWeight: '500',
   },
   postContent: {
     fontSize: 15,
-    color: '#374151',
+    color: '#5C4A42',
     lineHeight: 22,
-    marginBottom: 12,
+    marginBottom: 16,
+    fontWeight: '500',
   },
   postMedia: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: 12,
+    backgroundColor: 'rgba(255, 254, 249, 0.8)',
+    borderRadius: 16,
     height: 200,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(92, 74, 66, 0.08)',
   },
   groupCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    borderRadius: 20,
+    marginBottom: 18,
+    shadowColor: '#5C4A42',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
     elevation: 2,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(92, 74, 66, 0.08)',
   },
   mediaPlaceholder: {
     fontSize: 48,
@@ -1552,15 +1574,15 @@ const styles = StyleSheet.create({
   },
   mediaLabel: {
     fontSize: 14,
-    color: '#6B7280',
+    color: '#5C4A42',
     fontWeight: '500',
   },
   postActions: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingTop: 12,
+    paddingTop: 14,
     borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+    borderTopColor: 'rgba(92, 74, 66, 0.06)',
   },
   actionButton: {
     flexDirection: 'row',
@@ -1569,24 +1591,29 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: '#8C7B73',
     fontWeight: '600',
   },
   likedText: {
-    color: '#EF4444',
+    color: '#EC4899',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(44, 36, 32, 0.5)',
     justifyContent: 'flex-end',
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: 24,
     paddingBottom: 40,
     maxHeight: '80%',
+    shadowColor: '#2C2420',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 12,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1597,18 +1624,20 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#111827',
+    color: '#2C2420',
+    letterSpacing: 0.3,
   },
   postInput: {
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    padding: 16,
+    borderColor: 'rgba(92, 74, 66, 0.12)',
+    borderRadius: 16,
+    padding: 18,
     fontSize: 15,
-    color: '#111827',
+    color: '#2C2420',
     minHeight: 120,
     textAlignVertical: 'top',
     marginBottom: 16,
+    backgroundColor: 'rgba(255, 254, 249, 0.5)',
   },
   selectedMediaContainer: {
     marginBottom: 16,
@@ -1617,15 +1646,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F0F9FF',
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: 'rgba(241, 132, 45, 0.1)',
+    padding: 14,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: 'rgba(241, 132, 45, 0.2)',
   },
   selectedMediaText: {
     fontSize: 14,
-    color: '#1E40AF',
+    color: '#F1842D',
     fontWeight: '600',
   },
   mediaButtons: {
@@ -1639,25 +1668,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: 'rgba(241, 132, 45, 0.1)',
     paddingVertical: 14,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: 'rgba(241, 132, 45, 0.2)',
   },
   mediaButtonText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#3B82F6',
+    color: '#F1842D',
   },
   publishButton: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#F1842D',
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 14,
     alignItems: 'center',
+    shadowColor: '#F1842D',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
   },
   publishButtonDisabled: {
-    backgroundColor: '#D1D5DB',
+    backgroundColor: '#8C7B73',
+    shadowOpacity: 0,
   },
   publishButtonText: {
     fontSize: 16,
@@ -1674,17 +1709,17 @@ const styles = StyleSheet.create({
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: 20,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(92, 74, 66, 0.08)',
   },
   filterButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#111827',
+    color: '#2C2420',
   },
   filterModalOverlay: {
     flex: 1,
@@ -1696,15 +1731,20 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(44, 36, 32, 0.5)',
   },
   filterModalContent: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: 24,
     paddingBottom: 40,
     maxHeight: '60%',
+    shadowColor: '#2C2420',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 12,
   },
   filterModalHeader: {
     flexDirection: 'row',
@@ -1715,7 +1755,8 @@ const styles = StyleSheet.create({
   filterModalTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#111827',
+    color: '#2C2420',
+    letterSpacing: 0.3,
   },
   filterOptionsContainer: {
     gap: 12,
@@ -1723,25 +1764,25 @@ const styles = StyleSheet.create({
   filterOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: '#F9FAFB',
+    padding: 18,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 254, 249, 0.8)',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(92, 74, 66, 0.08)',
     gap: 12,
   },
   filterOptionActive: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#3B82F6',
+    backgroundColor: 'rgba(241, 132, 45, 0.1)',
+    borderColor: '#F1842D',
   },
   filterOptionText: {
     flex: 1,
     fontSize: 16,
     fontWeight: '500',
-    color: '#6B7280',
+    color: '#5C4A42',
   },
   filterOptionTextActive: {
-    color: '#3B82F6',
+    color: '#F1842D',
     fontWeight: '600',
   },
 });

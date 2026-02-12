@@ -270,9 +270,7 @@ eventSchema.index({ isPaid: 1 });
 eventSchema.index({ eventDate: 1, startTime: 1 });
 eventSchema.index({ createdAt: -1 });
 eventSchema.index({ locationType: 1 });
-eventSchema.index({ organizerId: 1 });
-
-// Pre-save middleware to update status based on eventDate
+eventSchema.index({ organizerId: 1 });// Pre-save middleware to update status based on eventDate
 eventSchema.pre('save', function(next) {
   const now = new Date();
   
@@ -299,6 +297,22 @@ eventSchema.pre('save', function(next) {
   }
   
   next();
+});
+
+// Pre-delete middleware to cascade delete EventRegistrations
+eventSchema.pre('deleteOne', { document: false, query: true }, async function() {
+  try {
+    const { EventRegistration } = await import('./eventRegistration.models.js');
+    const filter = this.getFilter();
+    const eventId = filter._id;
+    
+    if (eventId) {
+      const result = await EventRegistration.deleteMany({ eventId });
+      console.log(`✅ Cascade deleted ${result.deletedCount} registrations for event: ${eventId}`);
+    }
+  } catch (error) {
+    console.error('❌ Error deleting event registrations:', error);
+  }
 });
 
 // Methods    

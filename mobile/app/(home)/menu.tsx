@@ -1,140 +1,470 @@
 import { useRouter } from 'expo-router';
-import React from 'react';
-import { ScrollView, Text, TouchableOpacity, View, Linking } from 'react-native';
+import React, { useRef } from 'react';
+import { ScrollView, Text, TouchableOpacity, View, Linking, Animated, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import Header from '../../components/Header';
+
+interface FeatureCardProps {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  description: string;
+  color: string;
+  bgColor: string;
+  onPress?: () => void;
+}
+
+interface QuickAccessItemProps {
+  icon?: keyof typeof Ionicons.glyphMap;
+  emoji?: string;
+  title: string;
+  description: string;
+  iconBg: string;
+  iconColor?: string;
+  onPress: () => void;
+}
+
+function FeatureCard({ icon, title, description, color, bgColor, onPress }: FeatureCardProps) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  
+  const handlePressIn = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Animated.spring(scaleAnim, {
+      toValue: 0.96,
+      useNativeDriver: true,
+    }).start();
+  };
+  
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  };
+  
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      activeOpacity={0.8}
+      style={[styles.featureCard, { transform: [{ scale: scaleAnim }] }]}
+    >
+      <View style={[styles.iconContainer, { backgroundColor: bgColor }]}>
+        <Ionicons name={icon} size={28} color={color} />
+      </View>
+      <Text style={styles.featureTitle}>{title}</Text>
+      <Text style={styles.featureDescription}>{description}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function QuickAccessItem({ icon, emoji, title, description, iconBg, iconColor, onPress }: QuickAccessItemProps) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.98,
+      useNativeDriver: true,
+    }).start();
+  };
+  
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  };
+  
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      activeOpacity={0.7}
+      style={[styles.quickAccessItem, { transform: [{ scale: scaleAnim }] }]}
+    >
+      <View style={[styles.quickAccessIcon, { backgroundColor: iconBg }]}>
+        {icon ? (
+          <Ionicons name={icon} size={22} color={iconColor || '#F1842D'} />
+        ) : (
+          <Text style={styles.quickAccessEmoji}>{emoji}</Text>
+        )}
+      </View>
+      <View style={styles.quickAccessContent}>
+        <Text style={styles.quickAccessTitle}>{title}</Text>
+        <Text style={styles.quickAccessDescription}>{description}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={20} color="#8C7B73" />
+    </TouchableOpacity>
+  );
+}
 
 export default function HomeTab() {
   const router = useRouter();
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const heroScale = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [1, 0.92],
+    extrapolate: 'clamp',
+  });
 
   const handleWatchIntro = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Linking.openURL('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
   };
   
   return (
-    <View className="flex-1 bg-gray-50">
+    <View style={styles.container}>
       <Header />
     
       <ScrollView 
-        className="px-5 pt-5" 
-        contentContainerStyle={{ paddingBottom: 120 }}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-      >  
-        {/* Intro Video Section */}
-        <View className="bg-gray-900 rounded-3xl p-5 mb-6 shadow-lg">
-          <View className="w-full h-44 bg-gray-700 rounded-2xl items-center justify-center mb-4">
-            <View className="w-16 h-16 rounded-full bg-white/20 items-center justify-center">
-              <Ionicons name="play" size={32} color="#FFFFFF" />
+        scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+      >
+        {/* Hero Section - Warm Spiritual Ambient */}
+        <Animated.View style={[styles.heroSection, { transform: [{ scale: heroScale }] }]}>
+          <View style={styles.heroGradient} />
+          <View style={styles.heroAmbientGlow} />
+          <View style={styles.heroContent}>
+            <View style={styles.heroVideoThumbnail}>
+              <View style={styles.playButton}>
+                <Ionicons name="play" size={32} color="#FFFFFF" />
+              </View>
+              <View style={styles.playButtonGlow} />
+            </View>
+            <View style={styles.heroText}>
+              <Text style={styles.heroTitle}>Welcome to ParamSukh</Text>
+              <Text style={styles.heroDescription}>
+                Your spiritual companion for meditation, learning, and community connection.
+              </Text>
+              <TouchableOpacity 
+                style={styles.heroButton} 
+                onPress={handleWatchIntro}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="play-circle" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                <Text style={styles.heroButtonText}>Watch Intro</Text>
+              </TouchableOpacity>
             </View>
           </View>
-          <View className="items-start">
-            <Text className="text-2xl font-bold text-white mb-2">Welcome to ParamSukh</Text>
-            <Text className="text-[15px] text-gray-300 leading-[22px] mb-4">
-              Your spiritual companion for meditation, learning, and community connection. Discover courses, join events, and grow together.
-            </Text>
-            <TouchableOpacity className="flex-row items-center gap-2 bg-blue-500 py-3 px-5 rounded-xl" onPress={handleWatchIntro}>
-              <Ionicons name="play-circle" size={20} color="#FFFFFF" />
-              <Text className="text-[15px] font-semibold text-white">Watch Intro</Text>
-            </TouchableOpacity>
+        </Animated.View>
+
+        {/* Feature Cards - Warm Neumorphic */}
+        <View style={styles.featureSection}>
+          <Text style={styles.sectionTitle}>What We Offer</Text>
+          <View style={styles.featureGrid}>
+            <FeatureCard
+              icon="book"
+              title="Courses"
+              description="Learn at your own pace"
+              color="#8B5CF6"
+              bgColor="rgba(139, 92, 246, 0.12)"
+              onPress={() => router.push('/(home)/courses')}
+            />
+            <FeatureCard
+              icon="people"
+              title="Community"
+              description="Connect with others"
+              color="#2DD4BF"
+              bgColor="rgba(45, 212, 191, 0.12)"
+              onPress={() => router.push('/(home)/community')}
+            />
+            <FeatureCard
+              icon="calendar"
+              title="Events"
+              description="Join live sessions"
+              color="#F1842D"
+              bgColor="rgba(241, 132, 45, 0.15)"
+              onPress={() => router.push('/(home)/events')}
+            />
+            <FeatureCard
+              icon="headset"
+              title="Podcasts"
+              description="Audio wisdom"
+              color="#FB7185"
+              bgColor="rgba(251, 113, 133, 0.12)"
+              onPress={() => router.push('/(home)/podcasts')}
+            />
           </View>
         </View>
-          
-        {/* App Overview */}
-        <View className="mb-6">
-          <Text className="text-lg font-bold text-gray-900 mb-4">What We Offer</Text>
-          <View className="flex-row flex-wrap gap-3">
-            <View className="w-[48%] bg-white rounded-2xl p-4 items-center shadow-sm">
-              <View className="w-14 h-14 rounded-2xl bg-blue-50 items-center justify-center mb-3">
-                <Ionicons name="book" size={28} color="#3B82F6" />
-              </View>
-              <Text className="text-[15px] font-bold text-gray-900 mb-1">Courses</Text>
-              <Text className="text-xs text-gray-500 text-center">Learn at your own pace</Text>
-            </View>
-            <View className="w-[48%] bg-white rounded-2xl p-4 items-center shadow-sm">
-              <View className="w-14 h-14 rounded-2xl bg-green-50 items-center justify-center mb-3">
-                <Ionicons name="people" size={28} color="#10B981" />
-              </View>
-              <Text className="text-[15px] font-bold text-gray-900 mb-1">Community</Text>
-              <Text className="text-xs text-gray-500 text-center">Connect with others</Text>
-            </View>
-            <View className="w-[48%] bg-white rounded-2xl p-4 items-center shadow-sm">
-              <View className="w-14 h-14 rounded-2xl bg-yellow-50 items-center justify-center mb-3">
-                <Ionicons name="calendar" size={28} color="#F59E0B" />
-              </View>
-              <Text className="text-[15px] font-bold text-gray-900 mb-1">Events</Text>
-              <Text className="text-xs text-gray-500 text-center">Join live sessions</Text>
-            </View>
-            <View className="w-[48%] bg-white rounded-2xl p-4 items-center shadow-sm">
-              <View className="w-14 h-14 rounded-2xl bg-pink-50 items-center justify-center mb-3">
-                <Ionicons name="headset" size={28} color="#EC4899" />
-              </View>
-              <Text className="text-[15px] font-bold text-gray-900 mb-1">Podcasts</Text>
-              <Text className="text-xs text-gray-500 text-center">Audio wisdom</Text>
-            </View> 
+
+        {/* Quick Access - Warm Elevated List */}
+        <View style={styles.quickAccessSection}>
+          <Text style={styles.sectionTitle}>Quick Access</Text>
+          <View style={styles.quickAccessList}>
+            <QuickAccessItem
+              icon="people"
+              title="Counseling"
+              description="Book 1-on-1 guidance sessions"
+              iconBg="rgba(139, 92, 246, 0.12)"
+              iconColor="#8B5CF6"
+              onPress={() => router.push('/counseling')}
+            />
+            <View style={styles.divider} />
+            <QuickAccessItem
+              emoji="🛍️"
+              title="Shops"
+              description="Pooja items, idols, books & frames"
+              iconBg="rgba(92, 74, 66, 0.08)"
+              onPress={() => router.push('/shops')}
+            />
+            <View style={styles.divider} />
+            <QuickAccessItem
+              emoji="💝"
+              title="Donations"
+              description="Support ParamSukh initiatives"
+              iconBg="rgba(92, 74, 66, 0.08)"
+              onPress={() => router.push('/donations')}
+            />
+            <View style={styles.divider} />
+            <QuickAccessItem
+              emoji="🎙️"
+              title="Podcasts"
+              description="Audio talks and meditations"
+              iconBg="rgba(92, 74, 66, 0.08)"
+              onPress={() => router.push('/(home)/podcasts')}
+            />
+            <View style={styles.divider} />
+            <QuickAccessItem
+              icon="trophy"
+              title="Rewards"
+              description="Bonus points & special gifts"
+              iconBg="rgba(241, 132, 45, 0.15)"
+              iconColor="#F1842D"
+              onPress={() => router.push('/rewards')}
+            />
           </View>
-        </View>
-
-        <Text className="text-sm font-semibold text-gray-600 mb-3">Quick Access</Text>
-
-        {/* Sections: Counseling, Shops, Donations, Podcasts */}   
-        <View className="gap-2.5">
-          <TouchableOpacity className="bg-white border border-gray-200 rounded-2xl p-4 flex-row items-center gap-3" onPress={() => router.push('/counseling')}>
-            <View className="w-11 h-11 rounded-xl bg-purple-100 items-center justify-center">
-              <Ionicons name="people" size={22} color="#8B5CF6" />
-            </View>
-            <View className="flex-1"> 
-              <Text className="text-base font-bold text-gray-900">Counseling</Text>
-              <Text className="text-[13px] text-gray-500 mt-0.5">Book 1-on-1 guidance sessions</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-          </TouchableOpacity>
-                  
-          <TouchableOpacity className="bg-white border border-gray-200 rounded-2xl p-4 flex-row items-center gap-3" onPress={() => router.push('/shops')}>
-            <View className="w-11 h-11 rounded-xl bg-gray-100 items-center justify-center">
-              <Text className="text-[22px]">🛍️</Text>    
-            </View>       
-            <View className="flex-1">
-              <Text className="text-base font-bold text-gray-900">Shops</Text>
-              <Text className="text-[13px] text-gray-500 mt-0.5">Pooja items, idols, books & frames</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-          </TouchableOpacity>
-          
-          <TouchableOpacity className="bg-white border border-gray-200 rounded-2xl p-4 flex-row items-center gap-3" onPress={() => router.push('/donations')}>
-            <View className="w-11 h-11 rounded-xl bg-gray-100 items-center justify-center">
-              <Text className="text-[22px]">💝</Text>
-            </View>  
-            <View className="flex-1">  
-              <Text className="text-base font-bold text-gray-900">Donations</Text>
-              <Text className="text-[13px] text-gray-500 mt-0.5">Support ParamSukh initiatives</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-          </TouchableOpacity>
-          <TouchableOpacity className="bg-white border border-gray-200 rounded-2xl p-4 flex-row items-center gap-3" onPress={() => router.push('/(home)/podcasts')}>
-            <View className="w-11 h-11 rounded-xl bg-gray-100 items-center justify-center">
-              <Text className="text-[22px]">🎙️</Text>
-            </View>
-            <View className="flex-1">
-              <Text className="text-base font-bold text-gray-900">Podcasts</Text>
-              <Text className="text-[13px] text-gray-500 mt-0.5">Audio talks and meditations</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-          </TouchableOpacity>
-
-          <TouchableOpacity className="bg-white border border-gray-200 rounded-2xl p-4 flex-row items-center gap-3" onPress={() => router.push('/rewards')}>
-            <View className="w-11 h-11 rounded-xl bg-yellow-100 items-center justify-center">
-              <Ionicons name="trophy" size={22} color="#F59E0B" />
-            </View>
-            <View className="flex-1">
-              <Text className="text-base font-bold text-gray-900">Rewards</Text>
-              <Text className="text-[13px] text-gray-500 mt-0.5">Bonus points & special gifts</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>
   );
 }
 
-
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FDF8F3',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 140,
+  },
+  // Hero Section
+  heroSection: {
+    marginHorizontal: 20,
+    marginTop: 8,
+    marginBottom: 28,
+    borderRadius: 28,
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#F1842D',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  heroGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'linear-gradient(135deg, rgba(92, 74, 66, 0.88) 0%, rgba(139, 92, 246, 0.72) 50%, rgba(241, 132, 45, 0.65) 100%)',
+  },
+  heroAmbientGlow: {
+    position: 'absolute',
+    top: -50,
+    left: -50,
+    right: -50,
+    bottom: -50,
+    backgroundColor: 'transparent',
+    borderRadius: 60,
+    shadowColor: '#F1842D',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 40,
+    elevation: 8,
+  },
+  heroContent: {
+    padding: 32,
+  },
+  heroVideoThumbnail: {
+    width: '100%',
+    height: 176,
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  playButton: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  playButtonGlow: {
+    position: 'absolute',
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: 'rgba(241, 132, 45, 0.3)',
+    shadowColor: '#F1842D',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 6,
+  },
+  heroText: {
+    alignItems: 'flex-start',
+  },
+  heroTitle: {
+    fontSize: 30,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 12,
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  heroDescription: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: 'rgba(255, 254, 249, 0.92)',
+    lineHeight: 24,
+    marginBottom: 24,
+    maxWidth: '90%',
+  },
+  heroButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(241, 132, 45, 0.85)',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 18,
+    shadowColor: '#F1842D',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  heroButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  // Feature Section
+  featureSection: {
+    marginHorizontal: 20,
+    marginBottom: 28,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#2C2420',
+    marginBottom: 18,
+    letterSpacing: 0.3,
+  },
+  featureGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  featureCard: {
+    width: '48%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 20,
+    alignItems: 'center',
+    marginBottom: 16,
+    shadowColor: '#5C4A42',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  iconContainer: {
+    width: 58,
+    height: 58,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  featureTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#2C2420',
+    marginBottom: 4,
+  },
+  featureDescription: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#5C4A42',
+    textAlign: 'center',
+    lineHeight: 19,
+  },
+  // Quick Access Section
+  quickAccessSection: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+  },
+  quickAccessList: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    shadowColor: '#5C4A42',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    elevation: 4,
+  },
+  quickAccessItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  quickAccessIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  quickAccessEmoji: {
+    fontSize: 22,
+  },
+  quickAccessContent: {
+    flex: 1,
+  },
+  quickAccessTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#2C2420',
+    marginBottom: 3,
+  },
+  quickAccessDescription: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#5C4A42',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(244, 243, 235, 0.9)',
+    marginHorizontal: 20,
+  },
+});
