@@ -17,6 +17,7 @@ interface Course {
     color: string;
     icon: string;
     duration: number;
+    category?: string;
     tags: string[];
     status: string;
     videos?: any[];
@@ -27,6 +28,12 @@ interface Course {
     averageRating?: number;
     reviewCount?: number;
     createdAt: string;
+}
+
+interface EnrollmentStats {
+    courseId: string;
+    enrollmentCount: number;
+    completedCount: number;
 }
 
 export default function CoursesPage() {
@@ -51,8 +58,8 @@ export default function CoursesPage() {
             
             // Merge enrollment stats into course data
             if (statsResponse?.data?.courses) {
-                const enrollmentStatsMap = new Map(
-                    statsResponse.data.courses.map((stat: any) => [stat.courseId, stat])
+                const enrollmentStatsMap = new Map<string, EnrollmentStats>(
+                    statsResponse.data.courses.map((stat: EnrollmentStats) => [stat.courseId, stat])
                 );
                 const coursesWithStats = coursesData.map((course: Course) => {
                     const stats = enrollmentStatsMap.get(course._id);

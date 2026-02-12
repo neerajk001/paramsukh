@@ -13,8 +13,8 @@ interface Course {
     icon: string;
     thumbnailUrl: string;
     bannerUrl: string;
-    duration: number; // Changed to string in UI but interface kept as number? Handled below
-    category: string; // Added category
+    duration: number;
+    category?: string;
     tags: string[];
     status: string;
 }
