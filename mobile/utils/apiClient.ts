@@ -2,6 +2,7 @@ import axios from 'axios';
 import { API_URL } from '../config/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../store/authStore';
+import { getTokenSecurely, getRefreshTokenSecurely, storeTokenSecurely, storeRefreshTokenSecurely, clearSecureTokens } from './biometricAuth';
 
 let isRefreshing = false;
 let failedQueue: any[] = [];
@@ -27,7 +28,7 @@ const apiClient = axios.create({
 // Request interceptor - add auth token
 apiClient.interceptors.request.use(
   async (config) => {
-    const token = await AsyncStorage.getItem('token');
+    const token = await getTokenSecurely();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -56,7 +57,7 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshToken = await AsyncStorage.getItem('refreshToken');
+        const refreshToken = await getRefreshTokenSecurely();
         
         if (!refreshToken) {
           throw new Error('No refresh token available');
@@ -69,6 +70,12 @@ apiClient.interceptors.response.use(
         if (response.data.success) {
           const { token, refreshToken: newRefreshToken } = response.data;
           
+          await storeTokenSecurely(token);
+          if (newRefreshToken) {
+            await storeRefreshTokenSecurely(newRefreshToken);
+          }
+          
+          // Also store in AsyncStorage for backward compatibility
           await AsyncStorage.setItem('token', token);
           if (newRefreshToken) {
             await AsyncStorage.setItem('refreshToken', newRefreshToken);
@@ -82,11 +89,12 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError, null);
         
-        // Refresh failed - clear tokens and user
-        await AsyncStorage.multiRemove(['token', 'refreshToken', 'user']);
+        // Refresh failed - clear all tokens and user data silently
+        await clearSecureTokens();
+        await AsyncStorage.multiRemove(['token', 'refreshToken', 'user', 'assessment_completed']);
         
-        // Clear auth state (will trigger redirect in app logic)
-        useAuthStore.getState().logout();
+        // Clear auth state without calling backend (token is invalid)
+        useAuthStore.setState({ user: null, token: null, refreshToken: null });
         
         return Promise.reject(refreshError);
       } finally {

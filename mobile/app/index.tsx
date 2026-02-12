@@ -55,8 +55,11 @@ export default function Home() {
         } else {
           router.replace('/assessment');
         }
-      } catch (error) {
-        console.error('Error checking auth/assessment:', error);
+      } catch (error: any) {
+        // Only log unexpected errors (not auth failures)
+        if (error.response?.status !== 401 && __DEV__) {
+          console.error('Error checking auth/assessment:', error);
+        }
         if (isMounted) {
           setHasChecked(true);
           router.replace('/signin');

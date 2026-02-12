@@ -68,6 +68,7 @@ export default function SignInScreen() {
     const result = await verifyOTP(formattedPhone, otp);
 
     if (result.success) {
+      // Existing user - let index.tsx check assessment status
       router.replace('/');
     } else {
       Alert.alert('Error', result.message || 'Verification failed');

@@ -15,8 +15,8 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../store/authStore';
-import axios from 'axios';
 import { API_URL } from '../config/api';
+import apiClient from '../utils/apiClient';
 
 export default function AssessmentScreen() {
   const router = useRouter();
@@ -97,12 +97,6 @@ export default function AssessmentScreen() {
     setIsSubmitting(true);
     
     try {
-      // Get token from AsyncStorage
-      const token = await AsyncStorage.getItem('token');
-      if (!token) {
-        throw new Error('No authentication token found. Please sign in again.');
-      }
-
       // Prepare assessment data for API
       const assessmentData = {
         age: parseInt(textInputs.age),
@@ -122,13 +116,8 @@ export default function AssessmentScreen() {
         spiritualGrowthDetails: ''
       };
 
-      // Submit to backend API
-      const response = await axios.post(`${API_URL}/assessment/submit`, assessmentData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      // Submit to backend API (apiClient automatically adds auth token)
+      const response = await apiClient.post('/assessment/submit', assessmentData);
 
       if (response.data.success) {
         // Save assessment completion locally

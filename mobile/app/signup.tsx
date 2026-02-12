@@ -75,7 +75,8 @@ export default function SignUpScreen() {
     const result = await verifyOTP(formattedPhone, otp, name.trim(), email.trim());
 
     if (result.success) {
-      router.replace('/');
+      // New user should go directly to assessment
+      router.replace('/assessment');
     } else {
       Alert.alert('Error', result.message || 'Verification failed');
     }

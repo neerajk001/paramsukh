@@ -40,7 +40,9 @@ export const getCurrentUser = async (req, res) => {
         subscriptionStatus: user.subscriptionStatus,
         trialEndsAt: user.trialEndsAt,
         lastLoginAt: user.lastLoginAt,
-        loginCount: user.loginCount
+        loginCount: user.loginCount,
+        assessmentCompleted: user.assessmentCompleted || false,
+        assessmentCompletedAt: user.assessmentCompletedAt || null
       }
     });
   } catch (error) {

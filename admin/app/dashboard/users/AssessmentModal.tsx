@@ -125,8 +125,6 @@ export default function AssessmentModal({ isOpen, onClose, assessment, userName 
                                     const hasIssue = assessment[section.issueKey];
                                     const details = assessment[section.detailsKey];
 
-                                    if (!hasIssue && !details) return null;
-
                                     return (
                                         <div key={section.title} className={`p-4 rounded-xl border ${hasIssue ? 'bg-red-50 border-red-100' : 'bg-green-50 border-green-100'}`}>
                                             <div className="flex items-center justify-between mb-2">

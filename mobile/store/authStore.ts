@@ -34,7 +34,7 @@ interface AuthState {
 
   googleSignIn: (idToken: string) => Promise<{ success: boolean; message?: string }>;
   sendOTP: (phone: string) => Promise<{ success: boolean; message?: string; isNewUser?: boolean; otp?: string }>;
-  verifyOTP: (phone: string, code: string, name?: string, email?: string) => Promise<{ success: boolean; message?: string }>;
+  verifyOTP: (phone: string, code: string, name?: string, email?: string) => Promise<{ success: boolean; message?: string; isNewUser?: boolean }>;
   logout: () => Promise<void>;
   logoutWithBiometric: () => Promise<{ success: boolean; message?: string }>;
   loadUser: () => Promise<void>;
@@ -140,6 +140,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const user = response.data.user;
         const token = response.data.token;
         const refreshToken = response.data.refreshToken;
+        const isNewUser = response.data.isNewUser;
         
         await AsyncStorage.setItem('user', JSON.stringify(user));
         await storeTokenSecurely(token);
@@ -147,9 +148,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           await storeRefreshTokenSecurely(refreshToken);
         }
         
+        // Sync assessment completion status from server
+        if (user.assessmentCompleted) {
+          await AsyncStorage.setItem('assessment_completed', 'true');
+        } else {
+          await AsyncStorage.removeItem('assessment_completed');
+        }
+        
         set({ user, token, refreshToken, isLoading: false });
-        // Load additional user data if needed
-        return { success: true };
+        return { success: true, isNewUser };
       }
 
       set({ isLoading: false, error: response.data.message });
@@ -259,18 +266,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // Update AsyncStorage with fresh user data
         await AsyncStorage.setItem('user', JSON.stringify(user));
         
+        // Sync assessment completion status from server
+        if (user.assessmentCompleted) {
+          await AsyncStorage.setItem('assessment_completed', 'true');
+        } else {
+          await AsyncStorage.removeItem('assessment_completed');
+        }
+        
         set({ user, token, refreshToken: await getRefreshTokenSecurely() });
         return { success: true, user };
       }
       
-      return { success: false };    } catch (error) {
-      if (__DEV__) {
-        console.error('Error fetching current user:', error);
-      }
-
-      // If 401, token is invalid - logout
+      return { success: false };
+    } catch (error: any) {
+      // If 401, token is invalid - clear local data silently (don't call backend)
       if (error.response?.status === 401) {
-        await get().logout();
+        await clearSecureTokens();
+        await AsyncStorage.multiRemove(['user', 'assessment_completed']);
+        set({ user: null, token: null, refreshToken: null });
+      } else if (__DEV__) {
+        console.error('Error fetching current user:', error);
       }
       
       return { success: false };

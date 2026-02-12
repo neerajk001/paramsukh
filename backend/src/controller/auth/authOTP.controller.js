@@ -143,7 +143,9 @@ export const verifyOTPController = async (req, res) => {
         subscriptionPlan: user.subscriptionPlan,
         subscriptionStatus: user.subscriptionStatus,
         trialEndsAt: user.trialEndsAt,
-        authProvider: user.authProvider
+        authProvider: user.authProvider,
+        assessmentCompleted: user.assessmentCompleted || false,
+        assessmentCompletedAt: user.assessmentCompletedAt || null
       }
     });
   } catch (error) {

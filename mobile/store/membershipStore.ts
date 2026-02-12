@@ -67,11 +67,11 @@ export const useMembershipStore = create<MembershipState>((set) => ({
                 set({ isLoading: false, currentSubscription: null, error: null });
             }
         } catch (error: any) {
-            // Silently handle subscription fetch errors
+            // Silently handle subscription fetch errors - don't show to user
             if (__DEV__) {
-                console.log('Subscription not available:', error.response?.status || 'Network error');
+                console.log('Could not load subscription details');
             }
-            // Don't logout or show errors - user might be on free tier
+            // Don't logout or show errors - user might be on free tier or offline
             set({
                 isLoading: false,
                 currentSubscription: null,
@@ -106,13 +106,24 @@ export const useMembershipStore = create<MembershipState>((set) => ({
                 return false;
             }
         } catch (error: any) {
-            console.error('Purchase Membership Error:', error);
-            if (error.response?.status === 401) {
-                useAuthStore.getState().logout();
+            if (__DEV__) {
+                console.error('Purchase Error:', error);
             }
+            
+            let userMessage = 'Unable to complete purchase. Please try again.';
+            
+            if (error.response?.status === 401) {
+                userMessage = 'Session expired. Please sign in again.';
+                useAuthStore.getState().logout();
+            } else if (error.response?.status === 400) {
+                userMessage = error.response?.data?.message || 'Invalid purchase details. Please check and try again.';
+            } else if (!error.response) {
+                userMessage = 'No internet connection. Please check your network and try again.';
+            }
+            
             set({
                 isPurchasing: false,
-                error: error.response?.data?.message || 'Failed to purchase membership'
+                error: userMessage
             });
             return false;
         }

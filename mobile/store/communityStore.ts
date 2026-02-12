@@ -100,8 +100,10 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
                 set({ groups: [], isLoading: false, error: null });
             }
         } catch (error: any) {
-            console.error('Fetch Groups Error:', error);
-            // Don't show error to user, show empty list
+            if (__DEV__) {
+                console.error('Fetch Groups Error:', error);
+            }
+            // Don't show error to user, show empty list (user might be offline)
             set({ groups: [], isLoading: false, error: null });
         }
     },
@@ -130,8 +132,16 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
                 set({ isLoading: false, error: 'Failed to load posts' });
             }
         } catch (error: any) {
-            console.error('Fetch Posts Error:', error);
-            set({ isLoading: false, error: 'Failed to load posts' });
+            if (__DEV__) {
+                console.error('Fetch Posts Error:', error);
+            }
+            
+            let userMessage = 'Unable to load posts. Pull down to refresh.';
+            if (!error.response) {
+                userMessage = 'No internet connection. Posts will load when you\'re back online.';
+            }
+            
+            set({ isLoading: false, error: userMessage });
         }
     },
 
@@ -168,7 +178,9 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
             }
             return null;
         } catch (error: any) {
-            console.error('Upload Media Error:', error);
+            if (__DEV__) {
+                console.error('Upload Media Error:', error);
+            }
             return null;
         }
     },
@@ -200,8 +212,18 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
             }
             return false;
         } catch (error: any) {
-            console.error('Create Post Error:', error);
-            set({ isLoading: false, error: 'Failed to create post' });
+            if (__DEV__) {
+                console.error('Create Post Error:', error);
+            }
+            
+            let userMessage = 'Unable to create post. Please try again.';
+            if (!error.response) {
+                userMessage = 'No internet connection. Please check your network.';
+            } else if (error.response?.status === 401) {
+                userMessage = 'Session expired. Please sign in again.';
+            }
+            
+            set({ isLoading: false, error: userMessage });
             return false;
         }
     },
@@ -230,7 +252,9 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
             });
             // Backend handles actual logic
         } catch (error) {
-            console.error('Like Post Error:', error);
+            if (__DEV__) {
+                console.error('Like Post Error:', error);
+            }
             // Revert changes on error
             set(state => ({
                 posts: state.posts.map(p => {
@@ -262,7 +286,9 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
                 headers: { Authorization: `Bearer ${token}` }
             });
         } catch (error) {
-            console.error('Delete Post Error:', error);
+            if (__DEV__) {
+                console.error('Delete Post Error:', error);
+            }
             // Revert
             set({ posts: previousPosts });
         }
@@ -285,7 +311,9 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
                 }));
             }
         } catch (error) {
-            console.error('Fetch Comments Error:', error);
+            if (__DEV__) {
+                console.error('Fetch Comments Error:', error);
+            }
         }
     },
 
@@ -317,7 +345,9 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
             }
             return false;
         } catch (error) {
-            console.error('Add Comment Error:', error);
+            if (__DEV__) {
+                console.error('Add Comment Error:', error);
+            }
             return false;
         }
     },
@@ -348,7 +378,9 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
                 }
             }));
         } catch (error) {
-            console.error('Toggle Comment Like Error:', error);
+            if (__DEV__) {
+                console.error('Toggle Comment Like Error:', error);
+            }
         }
     }
 }));
